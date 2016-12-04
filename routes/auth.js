@@ -33,7 +33,6 @@ module.exports = function(Twitch, UserDatabase, TokenDatabase){
 												console.log(error.stack)
 									   		}, 
 									   		(token) => {
-								   				console.log("show form");
 												res.redirect('/jp/submit?token=' + token);
 								   			}
 								   		);

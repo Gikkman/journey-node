@@ -99,6 +99,6 @@ function onUncaughtException(ex) {
   process.exit(1);
 }
 
-function onExit() {
-  console.log("Shutting down with code " + process.exitCode );
+function onExit(code) {
+  console.log("Shutting down with code " + code );
 }

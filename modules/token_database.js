@@ -19,7 +19,7 @@ module.exports = function(MySQL){
 							var valuesSQL = 'VALUES(?,?,?,?';
 							var params = [User.id, token, User.display_name, User.submission_slots];
 							for(i = 0; i < rows.length; i++){
-								insertSQL += ', sub' + (i+1) + 'index';
+								insertSQL += ', prio' + (i+1) + 'index';
 								valuesSQL += ',?';
 								params.push( rows[i].index );
 							}
@@ -44,7 +44,7 @@ module.exports = function(MySQL){
 	mod.submissionsFromToken = function(token, onError, onSubmissions){
 		MySQL.query('SELECT s.* FROM gamesubmissions AS s '    											+ 			  								
 					'INNER JOIN (SELECT * FROM submissiontokens WHERE token = ?) AS t '					+							
-					'ON s.index IN (t.prio1Index, t.prio2Index, t.prio3Index, t.prioIndex, t.prio5Index) '	+
+					'ON s.index IN (t.prio1index, t.prio2index, t.prio3index, t.prio4index, t.prio5index) '	+
 					'ORDER BY s.index',											//TODO: ORDER BY priority		    
 			[token],
 			(err, rows) => {
@@ -73,11 +73,11 @@ module.exports = function(MySQL){
 
 					//If this token is fresh enough
 					data[valid] = true;
-					data[prio1index] = data.prio1Index;
-					data[prio2index] = data.prio2Index;
-					data[prio3index] = data.prio3Index;
-					data[prio4index] = data.prio4Index;
-					data[prio5index] = data.prio5Index;
+					data[prio1index] = data.prio1index;
+					data[prio2index] = data.prio2index;
+					data[prio3index] = data.prio3index;
+					data[prio4index] = data.prio4index;
+					data[prio5index] = data.prio5index;
 					onData(data);
 				}
 			}
