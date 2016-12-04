@@ -1,0 +1,13 @@
+{
+	"twitch_redir_url"	  : "http://localhost:3000/jp/auth/twitch",
+	"twitch_client_id"	  : "cxro6oyuwr4zujxntvqzd7idi6wodiw",
+	"twitch_client_secret": "2amd9xnwdmmz3m3jaejbb747zdorw6h",
+	"twitch_token_url"	  : "https://api.twitch.tv/kraken/oauth2/token",
+	
+
+	"mysql_password"	  : "8vU=3GP)zUE}'b.?ynmA*8>}^(-?x[x3_.WAVE.j#uX>v??uZfEeJ{6<dV<'pvZP",
+	"mysql_user"		  : "nodejs",
+	"mysql_schema"		  : "journey",
+	"mysql_port"		  : 3306,
+	"mysql_host"		  : "127.0.0.1"
+}

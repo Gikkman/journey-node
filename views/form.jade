@@ -1,0 +1,14 @@
+extends layout
+include mixins
+
+block nav
+  +nav_bar('submit')
+
+block content
+  script(type='text/javascript' src='/js/post-form.js')
+  .container#game-form
+    +title-alert
+    +system-alert
+    +game-form(1, submission)
+    input(id='token', type='hidden', value=token)
+    button.btn.btn-raised.btn-primary(type='button', onclick='submitForm()') Submit

@@ -1,0 +1,134 @@
+- var URL = "/jp"
+
+mixin bootswatch(theme)
+    link(href="//maxcdn.bootstrapcdn.com/bootswatch/3.3.0/" + theme + "/bootstrap.min.css", rel="stylesheet")
+
+mixin bootstrap()    
+    // jQuery
+    script(src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js')
+    
+    // Compiled and minified CSS
+    link(rel='stylesheet', href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css', integrity='sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u', crossorigin='anonymous')
+
+    // Compiled and minified JavaScript
+    script(src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js', integrity='sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa', crossorigin='anonymous')
+
+//- Navbar mixins
+mixin nav_bar(tab)
+    +nav("Journey Project", "dropdown_menu")
+        +nav_item( "/", tab === 'home' ) Home
+        +nav_item( "/submit", tab === 'submit') Submit
+        +nav_item( "/auth", tab === 'auth' ) Test Auth
+        +nav_item( "/contact", tab === 'contact' ) Contact
+        
+
+mixin nav(name, id, style)
+    - var style = (typeof style === 'undefined') ? "default" : style
+    nav( role="navigation", class=["navbar-fixed-top", "navbar-" + style] )
+        .container
+            .navbar-header
+                button.navbar-toggle.collapsed( type="button", data-toggle="collapse", data-target="#" + id, aria-expanded="false", aria-controls="navbar")
+                    span.sr-only Toggle navigation
+                    span.icon-bar
+                    span.icon-bar
+                    span.icon-bar
+                a.navbar-brand(href=URL)= name
+     
+            .collapse.navbar-collapse( id=id )
+                ul.nav.navbar-nav
+                    block
+ 
+mixin nav_item(href, active)
+    li(class = active ? "active" : ""): a( href=URL + href )
+        block
+ 
+mixin nav_item_dropdown(href, active)
+    li(class=["dropdown", active])
+        a.dropdown-toggle( href=URL + href, data-toggle="dropdown", role="button", aria-expanded="false" )= attributes.label
+            span.caret
+        ul.dropdown-menu( role="menu" )
+            block
+ 
+mixin nav_divider
+    li.divider
+ 
+mixin nav_header
+    li.dropdown-header
+        block
+ 
+//- End navbar mixins
+
+//- Button mixin
+mixin button(style, href, size)
+    - var style = (typeof style === 'undefined') ? "default" : style
+    - var href = (typeof href === 'undefined') ? "#" : href
+    case size
+        when "large"
+            - size = "btn-lg"
+        when "small"
+            - size = "btn-sm"
+        when "mini"
+            - size = "btn-xs"
+ 
+    a( class=["btn", "btn-" + style, size], href=href )
+        block
+//- End button mixin
+
+//- Alert mixin
+mixin alert(id, style, message, strong)
+    .alert(id=id, class="alert-"+style, style="display:none;")
+        button.close(href='#', type='button') ×
+        strong #{strong}
+        | #{message}
+
+mixin title-alert
+    +alert("titleMissingAlert", 'warning', "A submission requires that a title is specified!", "Title missing!")
+
+mixin system-alert
+    +alert("systemMissingAlert", 'warning', "A submission requires that a system is specified!", "System missing!")
+//- End alert mixin
+
+//- Panel mixin
+mixin panel(heading, style)
+    - var style = (typeof style === 'undefined') ? "default" : style
+    div( class=["panel", "panel-" + style] )
+        .panel-heading= heading
+        .panel-body
+            block
+//- End panel mixin
+
+//- Forms mixin
+mixin text-field(label, id, placeholder)
+    label.control-label.col-sm-2(for=id) label
+        .col-sm-10
+            input.form-control(id=id,placeholder=placeholder)
+
+mixin text-field-required(label, id, placeholder)
+    label.control-label.col-sm-2(for=id) label
+        .col-sm-10
+            input.form-control(id=id,placeholder=placeholder)
+
+mixin submit-button
+    .form-group
+        .col-sm-offset-2.col-sm-10
+            button.btn.btn-default(type='submit') Submit
+
+mixin game-form(prio, game)
+    - var g = (typeof game === 'undefined') ? {} : game; 
+    h2 Prio #{prio}
+    form.form-horizontal(id='prio-'+prio)
+        .form-group.bmd-form-group
+            label.bmd-label-floating(for='title') Title (required)
+            input.form-control(id='title', type='text', value=g.title, placeholder='Enter title (required)', required='')
+        .form-group.bmd-form-group
+            label.bmd-label-floating(for='system') System (required)
+            input.form-control(id='system', type='text', value=g.system placeholder='Enter system (required)', required='')
+        .form-group.bmd-form-group
+            label.bmd-label-floating(for='goal') Goal
+            input.form-control(id='goal', type='text', value=g.goal, placeholder='Enter goal')
+        .form-group.bmd-form-group
+            label.bmd-label-floating(for='comments') Comments
+            textarea.form-control(id='comments', rows='3', value=g.comments, placeholder='Enter comments')
+        .form-group 
+            input(id='prio',  type='hidden', value=prio)
+//- End forms

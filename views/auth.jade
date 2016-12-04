@@ -1,0 +1,9 @@
+extends layout
+
+block nav
+	+nav_bar('auth')
+
+block content
+	h1= title
+	p URL equals #{url}
+	p Code equals #{code}

@@ -1,0 +1,30 @@
+include mixins
+
+doctype html
+html
+  head
+    title Journey Project
+    meta( charset='utf-8' )
+    meta( http-equiv='X-UA-Compatible', content='IE=edge' )
+    meta( name="viewport" content="width=device-width, initial-scale=1")
+
+    meta( name='description', content='Journey' )
+
+    +bootstrap()
+    +bootswatch("flatly")
+    link(rel='stylesheet', href='/css/style.css')
+      
+  body
+    .container
+        block nav
+
+    .container
+      .main-content
+        block content
+    
+    footer.footer
+      .container
+        span.text-muted
+          p Developed by 
+          a#contact(href='https://twitter.com/gikkman') Gikkman | | Twitter: @gikkman
+

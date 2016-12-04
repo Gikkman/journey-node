@@ -1,0 +1,33 @@
+module.exports = function(MySQL){
+	var mod = {};
+
+	mod.findOrCreate = function(data, onError, onUser){
+		var user = {};
+
+		user._id = data._id;
+		user.display_name = data.display_name;
+		user.verified = data.email ? true : false;
+
+		MySQL.query('INSERT INTO users (id, display_name, verified) VALUES(?, ?, ?) ' +
+				    'ON DUPLICATE KEY UPDATE verified=?', 
+			[user._id, user.display_name, user.verified, user.verified],
+		    (err, rows) => {
+		    	if( err )
+		    		onError(err);
+		    	else{
+		    		MySQL.query('SELECT * FROM users WHERE id = ?', 
+	    				[user._id],
+	    				(_err, _rows) => {
+	    					if( _err )
+	    						orError(_err)
+	    					else
+	    						onUser( _rows[0] )
+	    				}
+    				);
+		    	}
+		    }
+    	);
+	}
+
+	return mod;
+}
