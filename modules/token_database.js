@@ -1,3 +1,4 @@
+const 30_MINUTES = 30*60*1000;
 module.exports = function(MySQL){
 	var UUID  = require('uuid');
 	var mod = {};
@@ -66,18 +67,14 @@ module.exports = function(MySQL){
 					var data = {};
 
 					//If token is to old
-					if(rows.created /* over 30 minutes */){
-						data[valid] = false;
+					if( (new Date() - rows[0].created) > 30_MINUTES){
+						data.valid = false;
 						onData(data);
 					} 
 
 					//If this token is fresh enough
-					data[valid] = true;
-					data[prio1index] = data.prio1index;
-					data[prio2index] = data.prio2index;
-					data[prio3index] = data.prio3index;
-					data[prio4index] = data.prio4index;
-					data[prio5index] = data.prio5index;
+					data.valid = true;
+					data.submitterID = rows[0].playerID;
 					onData(data);
 				}
 			}
