@@ -4,47 +4,59 @@ module.exports = function(TokenDatabase, SubmissionDatabase){
 
 	router.post('/submit', (req, res) => {
 		try{
+			var submission = req.body.i1;
 			var token = req.body.token;
+			if( !SubmissionDatabase.validateSubmission(submission) ){
+				errorResponse(res, err, "Invalid submission");
+				return;
+			}
+
 			TokenDatabase.validateToken(token,
 				(error) => {
-					//TODO
+					errorResponse(res, error, "Token query failed");
 				},
 				(token_data) => {
 					if( !token_data.valid ){
-						res.send("ERR");
-					} else {
-						var submission = req.body.i1;
-						submission.submitterID = token_data.submitterID;
-						var subString  = JSON.stringify(sub1);
-
-						console.log('Token: ' + token);
-						console.log('Sub1 should replace: ' + token_data.index);
-						console.log('Sub1: ' + subString);
-
-						res.send('SUCC');
+						errorResponse(res, null, "Invalid token");
 						return;
-
-						SubmissionDatabase.removeSubmission(token_data.submitterID,
-							(error) => {
-								//TODO
-							}, 
-							(success) => {
-								SubmissionDatabase.makeSubmission(submission, 
-									(_error) => {
-										//TODO
-									}, 
-									(_success) => {
-										res.send("SUCC");
-									}
-								);
-							}
-						);	
 					} 
+						
+					submission.submitterID = token_data.submitterID;
+					var subString  = JSON.stringify(sub1);
+
+					console.log('Token: ' + token);
+					console.log('Sub1 should replace: ' + token_data.index);
+					console.log('Sub1: ' + subString);
+
+					res.send('SUCC');
+					return;
+
+					SubmissionDatabase.removeSubmission(token_data.submitterID,
+						(_error) => {
+							errorResponse(res, _error, "Deleting submission query failed");
+						}, 
+						(_success) => {
+							SubmissionDatabase.makeSubmission(submission, 
+								(__error) => {
+									errorResponse(res, __error, "Inserting submission query failed");
+								}, 
+								(__success) => {
+									res.send({status: 1000, message: "Submission successful"});
+								}
+							);
+						}
+					);	
 				}
 			);		
 		} catch(err) {
-			res.send("ERR");
+			errorResponse(res, err, "Unexpected submission error")
 		}
 	});
+
 	return router;
+}
+
+function errorResponse(res, error, message){
+	var errMess = error ? ": " + error.message : "";
+	res.send({status: 1001, message: message + errMess});
 }

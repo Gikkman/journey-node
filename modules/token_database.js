@@ -1,4 +1,5 @@
-const 30_MINUTES = 30*60*1000;
+var OLD = 30*60*1000;
+
 module.exports = function(MySQL){
 	var UUID  = require('uuid');
 	var mod = {};
@@ -67,7 +68,7 @@ module.exports = function(MySQL){
 					var data = {};
 
 					//If token is to old
-					if( (new Date() - rows[0].created) > 30_MINUTES){
+					if( (new Date() - rows[0].created) > OLD){
 						data.valid = false;
 						onData(data);
 					} 
