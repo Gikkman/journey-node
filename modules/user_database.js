@@ -8,14 +8,14 @@ module.exports = function(MySQL){
 		user.display_name = data.display_name;
 		user.verified = data.email ? true : false;
 
-		MySQL.query('INSERT INTO users (id, display_name, verified) VALUES(?, ?, ?) ' +
-				    'ON DUPLICATE KEY UPDATE verified=?', 
-			[user._id, user.display_name, user.verified, user.verified],
+		MySQL.query('INSERT INTO users (user_id, display_name, verified) VALUES(?, ?, ?) ' +
+				    'ON DUPLICATE KEY UPDATE verified=?, display_name=?', 
+			[user._id, user.display_name, user.verified, user.verified, user.display_name],
 		    (err, rows) => {
 		    	if( err )
 		    		onError(err);
 		    	else{
-		    		MySQL.query('SELECT * FROM users WHERE id = ?', 
+		    		MySQL.query('SELECT * FROM users WHERE user_id = ?', 
 	    				[user._id],
 	    				(_err, _rows) => {
 	    					if( _err )

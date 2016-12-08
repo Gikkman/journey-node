@@ -1,4 +1,4 @@
-var URL = "/jp/act/submit";
+var URL = "/jp/ajax/submit";
 
 
 function submitForm(){
@@ -39,7 +39,7 @@ function submitForm(){
 			URL,
 			obj,
 			function(data, status) {
-				console.log(status + ": " + data);
+				console.log(status + ": " + JSON.stringify(data));
 			},
 			"json"
 		);

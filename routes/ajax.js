@@ -21,24 +21,19 @@ module.exports = function(TokenDatabase, SubmissionDatabase){
 						return;
 					} 
 						
-					submission.submitterID = token_data.submitterID;
-					var subString  = JSON.stringify(sub1);
+					submission.user_id 	    = token_data.user_id;
+					submission.display_name = token_data.display_name;
 
-					console.log('Token: ' + token);
-					console.log('Sub1 should replace: ' + token_data.index);
-					console.log('Sub1: ' + subString);
+					console.log('Sub: ' + JSON.stringify(submission));
 
-					res.send('SUCC');
-					return;
-
-					SubmissionDatabase.removeSubmission(token_data.submitterID,
+					SubmissionDatabase.deleteSubmission(token_data.user_id,
 						(_error) => {
-							errorResponse(res, _error, "Deleting submission query failed");
+							errorResponse(res, _error, "DELETE submission query failed");
 						}, 
 						(_success) => {
 							SubmissionDatabase.makeSubmission(submission, 
 								(__error) => {
-									errorResponse(res, __error, "Inserting submission query failed");
+									errorResponse(res, __error, "INSERT submission query failed");
 								}, 
 								(__success) => {
 									res.send({status: 1000, message: "Submission successful"});

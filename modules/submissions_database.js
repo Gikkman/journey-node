@@ -5,9 +5,9 @@ module.exports = function(MySQL){
 		return submission.title && submission.system;
 	}
 
-	obj.deleteSubmission = function(submitterID, onError, onSuccess){
-		MySQL.query("DELETE FROM gamesubmissions WHERE submitterID=?", 
-			[submitterID], 
+	obj.deleteSubmission = function(userID, onError, onSuccess){
+		MySQL.query("DELETE FROM gamesubmissions WHERE user_id=?", 
+			[userID], 
 			(err, rows) => {
 				if( err ) 
 					onError(err);
@@ -18,8 +18,8 @@ module.exports = function(MySQL){
 	}
 
 	obj.makeSubmission = function(submission, onError, onSuccess){
-		MySQL.query("INSERT INTO gamesubmissions (title, system, goal, comments, submitterID) VALUES(?,?,?,?,?)",
-			[submission.title, submission.system, submission.goal, submission.comments, submission.submitterID],
+		MySQL.query("INSERT INTO gamesubmissions (title, system, goal, comments, user_id, display_name) VALUES(?,?,?,?,?,?)",
+			[submission.title, submission.system, submission.goal, submission.comments, submission.user_id, submission.display_name],
 			(err, rows) => {
 				if( err )
 					onError(err);

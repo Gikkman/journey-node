@@ -1,5 +1,3 @@
-var OLD = 30*60*1000;
-
 module.exports = function(MySQL){
 	var UUID  = require('uuid');
 	var mod = {};
@@ -7,47 +5,29 @@ module.exports = function(MySQL){
 	mod.prepareToken = function(User, onError, onToken){
 		var token = UUID();
 
-		MySQL.query('SELECT * FROM gamesubmissions WHERE submitterID=?', //TODO: ORDER BY priority
-			[User.id], 
-			(err, rows) => {
-				if(err)
-					onError(err);
-				else{
-					//Remove a potential old token that might be clogging up the database
-					MySQL.query('DELETE FROM submissiontokens WHERE user_id=?', 
-						[User.id], 
-						(_err, _rows) => {
-							var insertSQL = 'INSERT INTO submissiontokens (user_id, token, display_name, num_submissions';
-							var valuesSQL = 'VALUES(?,?,?,?';
-							var params = [User.id, token, User.display_name, User.submission_slots];
-							for(i = 0; i < rows.length; i++){
-								insertSQL += ', prio' + (i+1) + 'index';
-								valuesSQL += ',?';
-								params.push( rows[i].index );
-							}
-							insertSQL += ') ';
-							valuesSQL += ')';
-							MySQL.query( insertSQL + valuesSQL, 
-								params, 
-								(err, rows) => {
-									if(err)
-										onError(err);
-									else
-										onToken(token);
-								}
-							);
-						}
-					);
-				}
+		//Remove a potential old token that might be clogging up the database
+		MySQL.query('DELETE FROM submissiontokens WHERE user_id=?', 
+			[User.user_id], 
+			(_err, _rows) => {
+				var sql = 'INSERT INTO submissiontokens (user_id, token) VALUES(?,?)';
+				var params = [User.user_id, token];
+				MySQL.query( sql, 
+					params, 
+					(err, rows) => {
+						if(err)
+							onError(err);
+						else
+							onToken(token);
+					}
+				);
 			}
 		);
 	}
 
 	mod.submissionsFromToken = function(token, onError, onSubmissions){
-		MySQL.query('SELECT s.* FROM gamesubmissions AS s '    											+ 			  								
-					'INNER JOIN (SELECT * FROM submissiontokens WHERE token = ?) AS t '					+							
-					'ON s.index IN (t.prio1index, t.prio2index, t.prio3index, t.prio4index, t.prio5index) '	+
-					'ORDER BY s.index',											//TODO: ORDER BY priority		    
+		MySQL.query('SELECT s.title, s.system, s.goal, s.comments FROM gamesubmissions AS s '    		 + 			  								
+					'INNER JOIN (SELECT user_id, token FROM submissiontokens WHERE token = ?) AS t ' +							
+					'ON s.user_id = t.user_id ',    
 			[token],
 			(err, rows) => {
 				if(err)
@@ -58,8 +38,12 @@ module.exports = function(MySQL){
 		);
 	}
 
+	var OLD = 30*60*1000;
 	mod.validateToken = function(token, onError, onData){
-		MySQL.query('SELECT * FROM submissiontokens WHERE token = ?',
+		MySQL.query('SELECT u.user_id, u.display_name FROM submissiontokens AS t ' +
+					'INNER JOIN ( SELECT user_id, display_name FROM users ) AS u ' +
+					'ON t.user_id = u.user_id ' +
+					'WHERE t.token = ?',
 			[token],
 			(err, rows) => {
 				if(err)
@@ -67,7 +51,7 @@ module.exports = function(MySQL){
 				else {
 					var data = {};
 
-					//If token is to old
+					//If token is too old
 					if( (new Date() - rows[0].created) > OLD){
 						data.valid = false;
 						onData(data);
@@ -75,7 +59,8 @@ module.exports = function(MySQL){
 
 					//If this token is fresh enough
 					data.valid = true;
-					data.submitterID = rows[0].playerID;
+					data.user_id = rows[0].user_id;
+					data.display_name = rows[0].display_name;
 					onData(data);
 				}
 			}
