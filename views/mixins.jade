@@ -17,9 +17,7 @@ mixin bootstrap()
 mixin nav_bar(tab)
     +nav("Journey Project", "dropdown_menu")
         +nav_item( "/", tab === 'home' ) Home
-        +nav_item( "/submit", tab === 'submit') Submit
-        +nav_item( "/auth", tab === 'auth' ) Test Auth
-        +nav_item( "/contact", tab === 'contact' ) Contact
+        +nav_item( "/auth", tab === 'submit') Submit
         
 
 mixin nav(name, id, style)
@@ -115,7 +113,7 @@ mixin submit-button
 
 mixin game-form(prio, game)
     - var g = (typeof game === 'undefined') ? {} : game; 
-    h2 Prio #{prio}
+    //- h2 Prio #{prio}
     form.form-horizontal(id='prio-'+prio)
         .form-group.bmd-form-group
             label.bmd-label-floating(for='title') Title (required)

@@ -36,7 +36,7 @@ module.exports = function(TokenDatabase, SubmissionDatabase){
 									errorResponse(res, __error, "INSERT submission query failed");
 								}, 
 								(__success) => {
-									res.send({status: 1000, message: "Submission successful"});
+									res.render('message', {title: 'Submission successful', message: "Thank you for submitting a quest to The Journey Project.\nMuch appreciated"})
 								}
 							);
 						}
@@ -52,6 +52,5 @@ module.exports = function(TokenDatabase, SubmissionDatabase){
 }
 
 function errorResponse(res, error, message){
-	var errMess = error ? ": " + error.message : "";
-	res.send({status: 1001, message: message + errMess});
+	res.render('error', {title: error.message, status: 1001, message:message});
 }

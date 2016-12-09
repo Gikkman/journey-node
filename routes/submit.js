@@ -7,7 +7,7 @@ module.exports = function(TokenDatabase){
 		if( token ){
 			var submissions = TokenDatabase.submissionsFromToken(token,
 				(error) => {
-					console.log(error);
+					errorResponse(res, error, "Could not fetch previous submission(s)")
 				},
 				(submissions) => {
 					res.render('form', {token: token, submission: submissions[0]});
@@ -18,4 +18,8 @@ module.exports = function(TokenDatabase){
 			res.redirect('auth');
 	});
 	return router;
+}
+
+function errorResponse(res, error, message){
+	res.render('error', {title: error.message, status: 1003, message:message});
 }

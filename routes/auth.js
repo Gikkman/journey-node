@@ -14,30 +14,30 @@ module.exports = function(Twitch, UserDatabase, TokenDatabase){
 		if( req.query.state == REDIRECT_KEY ) {
 	  		Twitch.authenticate( req.query.code,
 	  			(error) => {
-		  			res.render('auth', { title: "Twitch Error 1" + error.status, url: error.error, code: error.message });
+	  				errorResponse(res, error, "If you do not log in with Twitch, you won't be able to make submissions")
 		  		},
 		  		(data) => {
 					Twitch.readPlayer(data.access_token, 
 						(error) => {
-							res.render('auth', { title: 'Twitch Error 2'+ error.status, url: error.error, code: error.message });
+							errorResponse(res, error, "Error reading user data from Twitch")
 						},
 						(data) => {
 							UserDatabase.findOrCreate(data, 
 								(error) => {
-									console.log(error.stack);
+									errorResponse(res, error, "Find or Create player failed")
 								},
 								(user) => {
 									if( user.verified ){
 									   	var token = TokenDatabase.prepareToken(user, 
 									   		(error) => {
-												console.log(error.stack)
+												errorResponse(res, error, "Could not prepare a submission token")
 									   		}, 
 									   		(token) => {
 												res.redirect('/jp/submit?token=' + token);
 								   			}
 								   		);
 								    } else {
-								    	res.render('auth_error', {name: display_name});
+								    	errorResponse(res, null, "It appears your email is not verified by Twitch. Please make sure you verify your email adres at Twitch")
 								    }
 								}
 							);
@@ -53,4 +53,8 @@ module.exports = function(Twitch, UserDatabase, TokenDatabase){
 	});
 
 	return router;
+}
+
+function errorResponse(res, error, message){
+	res.render('error', {title: error.message, status: 1002, message:message});
 }

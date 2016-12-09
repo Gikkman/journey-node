@@ -1,9 +1,24 @@
 extends layout
 
 block nav
-	+nav_bar('home')
+    +nav_bar('home')
 
 block content
-	h1 Welcome to Journey
-	h2 Dis ma site
-	pre Hello
+    h1 Welcome to The Journey Project
+    p 
+        |This site is dedicated to <b>The Journey Project</b>, which is a streaming project run by Twitch streamer Gikkman, and his merry men and women. The stream doesn't have a regular schedule, but can be found on 
+        a(href="https://www.twitch.tv/Gikkman") twitch.com/gikkman
+        |. Should you feel like it, please tune in and participate in our quest.
+    h2 Background
+    p 
+        |The Journey Project was inspired by streamers who perform various system challenges. Streamers such as TheMexicanRunner, SharpiePlays and ZenicReverie. I wanted to do something similar, but at the same time, I didn't want to be confined to a single system. So I came up with this; a challenge to simply play as many different games as possible.
+    h2 Basics
+    p 
+        |The core of The Journey Project, and the most important mechanic, is the <b>viewer submissions</b>. Any viewer can submit games (in here, we call them <b>quests</b>) to The Journey Project, which will be added to a database. At all times, we have one <i>Current quest</i> and one <i>Next quest</i>. Whenever the <i>Current quest</i> ends, we write a short review of the game we just played, and then, we assign the <i>Next quest</i> to be the current quest. Next, we raffle for a new quest from the database, and assign the winning quest the new <i>Next Quest</i>.<br>
+        |Each quest is attempted until <b>one of two condition are met</b>: we reach the assigned goal of the quest or the viewers vote that they've had enough. The voting system was implemented to give the users some degree of control over what happens and what games we play. But don't worry about voting a game out; quests go back into the database when they are voted out (unless the quest's submitter has made a new submission by then)<br>
+    h2 Quest mechanics
+    p  
+        |<b>Each user can have up to one quest submitted</b>, and you can overwrite your previous quest at any time. Should your quest be picked, you can submit a new one or leave your current quest in the database. Quests are only removed once the assigned goal is achieved (or the game is deemed unfit for the Journey). Thus, if a quest was ended prematurely due to being voted out, it <b>can be redrawn</b> and we will pick up where we left.<br>I'll try my very best to play all quests but some games might be hard to come by or the hardware hard to emulate. But I guarantee I will do my best. Another thing to have in mind is that I generally don't attempt quests for games released after 2000.
+    h2 Voting
+    p 
+        |While a quest is underway, a vote timer is constantly running. Whenever the vote timer reaches <b>0</b>, a vote icon will appear on the bottom right of the game view which shows the current voting status. You can then vote on whether we should continue trying to achieve the games goal or not, by voting in chat by typing <b>!yes</b> or <b>!no</b>

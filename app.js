@@ -43,4 +43,17 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
+
+process.on('uncaughtException', onUncaughtException);
+process.on('exit', onExit);
+process.on('SIGTERM', process.exit)
+process.on('SIGINT',  process.exit);
+function onUncaughtException(ex) {
+  console.log(ex);
+  process.exit(1);
+}
+function onExit(code) {
+  console.log("Shutting down with code " + code );
+}
+
 module.exports = app;

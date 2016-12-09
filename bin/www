@@ -29,11 +29,6 @@ server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
 
-process.on('uncaughtException', onUncaughtException);
-process.on('exit', onExit);
-process.on('SIGTERM', process.exit)
-process.on('SIGINT',  process.exit);
-
 /**
  * Normalize a port into a number, string, or false.
  */
@@ -92,13 +87,4 @@ function onListening() {
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
-}
-
-function onUncaughtException(ex) {
-  console.log(ex);
-  process.exit(1);
-}
-
-function onExit(code) {
-  console.log("Shutting down with code " + code );
 }

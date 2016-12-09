@@ -39,8 +39,10 @@ function submitForm(){
 			URL,
 			obj,
 			function(data, status) {
-				console.log(status + ": " + JSON.stringify(data));
+				document.open('text/html');
+				document.write(data);
+				document.close();
 			},
-			"json"
+			"html"
 		);
 }
