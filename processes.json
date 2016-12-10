@@ -6,8 +6,7 @@
     "ignore_watch" : ["node_modules"],
     "log_date_format"  : "YYYY-MM-DD HH:mm Z",
     "env": {
-      "PORT": 3000,
-      "STAGE": "prod"
+      "PORT": 3000
     },
   }]
 }
