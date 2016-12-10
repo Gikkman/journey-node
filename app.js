@@ -35,7 +35,7 @@ app.use(function(req, res, next) {
 app.use(function(err, req, res, next) {
   // set locals, only providing error in development
   res.locals.title = err.status || 500;
-  res.locals.message = req.app.get('env') === 'development' ? err.stack : "";
+  res.locals.message = process.env.STAGE === 'prod' ? "Location unknown" : err.stack;
 
   // render the error page
   res.status(err.status || 500);
