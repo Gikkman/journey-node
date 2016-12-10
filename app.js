@@ -6,12 +6,12 @@ var helmet = require('helmet');
 var bodyParser = require('body-parser');
 
 var app = express();
+app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(helmet());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(logger('dev'));
 app.use(express.static( path.join(__dirname, 'public')));
-app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 
 global.appRoot = path.resolve(__dirname+"/");
 global.modules = path.resolve(__dirname+"/modules/");
