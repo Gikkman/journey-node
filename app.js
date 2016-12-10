@@ -16,9 +16,11 @@ app.use(express.static( path.join(__dirname, 'public')));
 global.appRoot = path.resolve(__dirname+"/");
 global.modules = path.resolve(__dirname+"/modules/");
 
-var _config = require("./config.json");
+var _config = require("./config.json")[process.env.JOURNEY_CONFIG];
 var _mysql  = require("./modules/mysql.js")(_config);
 var _router = require('./routes/_router.js')(app, _mysql);
+
+console.log(process.env.JOURNEY_CONFIG);
 
 // view engine setup
 app.set('views', path.join( __dirname, 'views'));
@@ -35,13 +37,12 @@ app.use(function(req, res, next) {
 app.use(function(err, req, res, next) {
   // set locals, only providing error in development
   res.locals.title = err.status || 500;
-  res.locals.message = process.env.STAGE === 'prod' ? "Location unknown" : err.stack;
+  res.locals.message = _config.debug ? err.stack : "Location unknown";
 
   // render the error page
   res.status(err.status || 500);
   res.render('error');
 });
-
 
 process.on('uncaughtException', onUncaughtException);
 process.on('exit', onExit);

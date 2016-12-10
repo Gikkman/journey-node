@@ -48,8 +48,14 @@ module.exports = function(MySQL){
 			(err, rows) => {
 				if(err)
 					onError(err);
-				else {
+				else{
 					var data = {};
+
+					//If we didn't get a token (i.e. the token didn't exist)
+					if(!rows[0]){
+						data.valid = false;
+						onData(data);
+					}
 
 					//If token is too old
 					if( (new Date() - rows[0].created) > OLD){
@@ -63,6 +69,16 @@ module.exports = function(MySQL){
 					data.display_name = rows[0].display_name;
 					onData(data);
 				}
+			}
+		);
+	}
+
+	mod.removeToken = function(token, onError){
+		MySQL.query('DELETE FROM submissiontokens WHERE token = ?',
+			[token],
+			(err, rows) => {
+				if( err )
+					onError(err);
 			}
 		);
 	}

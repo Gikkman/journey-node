@@ -1,6 +1,6 @@
 var Querystring = require('querystring');
 var Https = require('https');
-var Config = require(appRoot + "/config.json");
+var Config = require(appRoot + "/config.json")[process.env.JOURNEY_CONFIG];
 
 module.exports.readPlayer = function(access_token, callback_error, callback_data) {
 	var post_options = {

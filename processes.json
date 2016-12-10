@@ -3,10 +3,14 @@
     "name"         : "journey-node",
     "script"       : "bin/www",
     "watch"        : true,
-    "ignore_watch" : ["node_modules"],
-    "log_date_format"  : "YYYY-MM-DD HH:mm Z",
-    "env": {
-      "PORT": 3000
+    "log_date_format" : "YYYY-MM-DD HH:mm:ss",
+    "env": {  
+        "PORT": 3000,
+        "JOURNEY_CONFIG": "dev"
     },
+    "env_prod" : {
+       "PORT": 3000,
+       "JOURNEY_CONFIG": "prod" 
+    }
   }]
-}
+} 

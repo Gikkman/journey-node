@@ -6,7 +6,7 @@ function submitForm(){
 	var token = $("#token").val();
 	var obj = {
 		token : token
-	}
+	}  
 	
 	$( "form" ).each( function( index ) {
 		if( this.title.value === '') {

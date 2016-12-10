@@ -56,5 +56,6 @@ module.exports = function(Twitch, UserDatabase, TokenDatabase){
 }
 
 function errorResponse(res, error, message){
+	var title = error ? error.message : "";
 	res.render('error', {title: error.message, status: 1002, message:message});
 }

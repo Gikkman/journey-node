@@ -20,11 +20,16 @@ module.exports = function(TokenDatabase, SubmissionDatabase){
 						errorResponse(res, null, "Invalid token");
 						return;
 					} 
+
+					TokenDatabase.removeToken(token,
+						(remove_error) => {
+							console.log("Error removing used token");
+							console.log(remove_error.stack)
+						}
+					);
 						
 					submission.user_id 	    = token_data.user_id;
 					submission.display_name = token_data.display_name;
-
-					console.log('Sub: ' + JSON.stringify(submission));
 
 					SubmissionDatabase.deleteSubmission(token_data.user_id,
 						(_error) => {
@@ -52,5 +57,6 @@ module.exports = function(TokenDatabase, SubmissionDatabase){
 }
 
 function errorResponse(res, error, message){
-	res.render('error', {title: error.message, status: 1001, message:message});
+	var title = error ? error.message : "";
+	res.render('error', {title: title, status: 1001, message:message});
 }

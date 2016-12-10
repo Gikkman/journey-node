@@ -21,5 +21,6 @@ module.exports = function(TokenDatabase){
 }
 
 function errorResponse(res, error, message){
-	res.render('error', {title: error.message, status: 1003, message:message});
+	var title = error ? error.message : "";
+	res.render('error', {title: title, status: 1003, message:message});
 }
