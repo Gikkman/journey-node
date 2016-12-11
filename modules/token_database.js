@@ -9,7 +9,7 @@ module.exports = function(MySQL){
 		MySQL.query('DELETE FROM submissiontokens WHERE user_id=?', 
 			[User.user_id], 
 			(_err, _rows) => {
-				var sql = 'INSERT INTO submissiontokens (user_id, token) VALUES(?,?)';
+				var sql = 'INSERT INTO submissiontokens (created, user_id, token) VALUES(CURRENT_TIMESTAMP,?,?)';
 				var params = [User.user_id, token];
 				MySQL.query( sql, 
 					params, 

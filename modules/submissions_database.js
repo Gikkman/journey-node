@@ -18,7 +18,7 @@ module.exports = function(MySQL){
 	}
 
 	obj.makeSubmission = function(submission, onError, onSuccess){
-		MySQL.query("INSERT INTO gamesubmissions (title, system, goal, comments, user_id, display_name) VALUES(?,?,?,?,?,?)",
+		MySQL.query("INSERT INTO gamesubmissions (title, system, goal, comments, user_id, display_name, submission_date) VALUES(?,?,?,?,?,?,CURRENT_TIMESTAMP)",
 			[submission.title, submission.system, submission.goal, submission.comments, submission.user_id, submission.display_name],
 			(err, rows) => {
 				if( err )
