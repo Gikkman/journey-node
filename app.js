@@ -20,8 +20,6 @@ var _config = require("./config.json")[process.env.JOURNEY_CONFIG];
 var _mysql  = require("./modules/mysql.js")(_config);
 var _router = require('./routes/_router.js')(app, _mysql);
 
-console.log(process.env.JOURNEY_CONFIG);
-
 // view engine setup
 app.set('views', path.join( __dirname, 'views'));
 app.set('view engine', 'jade');
@@ -47,12 +45,13 @@ app.use(function(err, req, res, next) {
 process.on('uncaughtException', onUncaughtException);
 process.on('exit', onExit);
 process.on('SIGTERM', process.exit)
-process.on('SIGINT',  process.exit);
+process.on('SIGINT',  () => {console.log("SIGINT")});
 function onUncaughtException(ex) {
   console.log(ex);
   process.exit(1);
 }
 function onExit(code) {
+  _mysql.shutdown();
   console.log("Shutting down with code " + code );
 }
 

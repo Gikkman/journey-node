@@ -50,24 +50,23 @@ module.exports = function(MySQL){
 					onError(err);
 				else{
 					var data = {};
-
 					//If we didn't get a token (i.e. the token didn't exist)
-					if(!rows[0]){
+					if(rows.length == 0){
 						data.valid = false;
 						onData(data);
 					}
-
 					//If token is too old
-					if( (new Date() - rows[0].created) > OLD){
+					else if( (new Date() - rows[0].created) > OLD){
 						data.valid = false;
 						onData(data);
 					} 
-
 					//If this token is fresh enough
-					data.valid = true;
-					data.user_id = rows[0].user_id;
-					data.display_name = rows[0].display_name;
-					onData(data);
+					else {
+						data.valid = true;
+						data.user_id = rows[0].user_id;
+						data.display_name = rows[0].display_name;
+						onData(data);
+					}
 				}
 			}
 		);

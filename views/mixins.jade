@@ -126,7 +126,8 @@ mixin game-form(prio, game)
             input.form-control(id='goal', type='text', value=g.goal, placeholder='Enter goal')
         .form-group.bmd-form-group
             label.bmd-label-floating(for='comments') Comments
-            textarea.form-control(id='comments', rows='3', value=g.comments, placeholder='Enter comments')
+            textarea.form-control(id='comments', rows='3', placeholder='Enter comments')
+                |#{g.comments}
         .form-group 
             input(id='prio',  type='hidden', value=prio)
 //- End forms

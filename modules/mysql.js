@@ -1,33 +1,41 @@
 module.exports = function(Config){
 	var mysql = require('mysql');
 	var obj = {};
+
+	var pool  = mysql.createPool({
+		connectionLimit : 10,
+		host     : Config.mysql_host,
+		port	 : Config.mysql_port,
+		user     : Config.mysql_user,
+		password : Config.mysql_password,
+		database : Config.mysql_schema
+	});
 	
 	obj.query = function(query, args, callback){
-		var connection = mysql.createConnection({
-			host     : Config.mysql_host,
-			port	 : Config.mysql_port,
-			user     : Config.mysql_user,
-			password : Config.mysql_password,
-			database : Config.mysql_schema
-		});
-
 		//Establish connection
-		connection.connect(function(err) {
+		pool.getConnection(function(err, conn) {
 			if (err) {
 				console.error('Error connecting: ' + err.stack);
 				return;
 			} else {
-				console.log("Connection OK");
 				//Fire query
-				connection.query(query, args, function(_err, results, fields){
+				conn.query(query, args, function(_err, results, fields){
 					callback(_err, results);
-					//Close connection
-					connection.end( (__err)=>{
-						if( __err){
-							console.log("SQL close connection error: " + __err.stack);
-						}
-					});	
+					
+					//Release connection
+					conn.release();
 				});	
+			}
+		});
+	}
+
+	obj.shutdown = function(){
+		pool.end( (err) => {
+			if(err){
+				console.log("Error when shutting down connection pool " + new Date());
+				console.log(err.stack);
+			} else {
+				console.log("Database shutdown successful " + new Date());
 			}
 		});
 	}

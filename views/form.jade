@@ -8,7 +8,7 @@ block content
     .col-md-12
         h1 Becoming a Quest Giver
         p 
-            |Below is some information about how to submit Quests to The Journey Project. If this is your first time setting up a quest submisson, please take a few moments to read through these notes. The guide line will help make quests more enjoyable for everyone.<br>
+            |Below is some information about how to submit Quests to The Journey Project. If this is your first time setting up a quest submisson, please take a few moments to read through these notes. These guide lines will help make quests more enjoyable for everyone.<br>
             |Should you want to, you can change your quest by simply making a new submission. The old quest will then be removed and your new one will be added. And please keep in mind that we might not be able to play newer games. Generally, as long as the game is released in or before 2000, you'll be safe. 
     .col-md-4
         h3 Game & System
@@ -25,10 +25,8 @@ block content
             strong A friendly reminder<br>
             | Submissions should not require any additional preparation on my side, or require that a certain viewer is present. If your goal is something I have to read an entire guide for in advance, it is probably not in the spirit of the Journey, and you should probably think of another goal.
     .col-md-12
-        .container#game-form
-            script(type='text/javascript' src='/js/post-form.js')
-            +title-alert
-            +system-alert
+        #alerts
+        #game-form
             +game-form(1, submission)
             input(id='token', type='hidden', value=token)
             button.btn.btn-raised.btn-primary(type='button', onclick='submitForm()') Submit
