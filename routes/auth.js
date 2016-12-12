@@ -12,32 +12,27 @@ module.exports = function(Twitch, UserDatabase, TokenDatabase){
 	router.get('/twitch', function(req, res) {
 		//If this requrest comes from Twitch's servers
 		if( req.query.state == REDIRECT_KEY ) {
-			console.log("checking twitch auth " + new Date());
 	  		Twitch.authenticate( req.query.code,
 	  			(error) => {
 	  				errorResponse(res, error, "If you do not log in with Twitch, you won't be able to make submissions")
 		  		},
 		  		(data) => {
-		  			console.log("reading player data from twitch " + new Date());
 					Twitch.readPlayer(data.access_token, 
 						(error) => {
 							errorResponse(res, error, "Error reading user data from Twitch")
 						},
 						(data) => {
-							console.log("creating or finding user " + new Date());
 							UserDatabase.findOrCreate(data, 
 								(error) => {
 									errorResponse(res, error, "Find or Create player failed")
 								},
 								(user) => {
 									if( user.verified ){
-										console.log("prepping token " + new Date());
 									   	var token = TokenDatabase.prepareToken(user, 
 									   		(error) => {
 												errorResponse(res, error, "Could not prepare a submission token")
 									   		}, 
 									   		(token) => {
-									   			console.log("redirect to submit " + new Date());
 												res.redirect('/jp/submit?token=' + token);
 								   			}
 								   		);

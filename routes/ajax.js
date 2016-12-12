@@ -10,18 +10,15 @@ module.exports = function(TokenDatabase, SubmissionDatabase){
 				errorResponse(res, err, "Invalid submission");
 				return;
 			}
-			console.log("validating token " + new Date());
 			TokenDatabase.validateToken(token,
 				(error) => {
 					errorResponse(res, error, "Token query failed");
 				},
 				(token_data) => {
-					console.log( "token_data  " + JSON.stringify(token_data))
 					if( !token_data.valid ){
 						errorResponse(res, null, "Invalid token");
 						return;
 					} 
-					console.log("removing token " + new Date());
 					TokenDatabase.removeToken(token,
 						(remove_error) => {
 							console.log("Error removing used token");
@@ -32,13 +29,11 @@ module.exports = function(TokenDatabase, SubmissionDatabase){
 					submission.user_id 	    = token_data.user_id;
 					submission.display_name = token_data.display_name;
 
-					console.log("deleting old submission " + new Date());
 					SubmissionDatabase.deleteSubmission(token_data.user_id,
 						(_error) => {
 							errorResponse(res, _error, "DELETE submission query failed");
 						}, 
 						(_success) => {
-							console.log("maing new submission " + new Date());
 							SubmissionDatabase.makeSubmission(submission, 
 								(__error) => {
 									errorResponse(res, __error, "INSERT submission query failed");
