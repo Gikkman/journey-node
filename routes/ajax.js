@@ -39,6 +39,7 @@ module.exports = function(TokenDatabase, SubmissionDatabase){
 									errorResponse(res, __error, "INSERT submission query failed");
 								}, 
 								(__success) => {
+									console.log("--- Submission successful! User: " + submission.display_name)
 									res.render('message', {title: 'Submission successful', message: "Thank you for submitting a quest to The Journey Project.\nMuch appreciated"})
 								}
 							);
