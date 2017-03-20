@@ -5,6 +5,7 @@ module.exports = function(MySQL){
 		var user = {};
 
 		user._id = data._id;
+		user.name = data.name;
 		user.display_name = data.display_name;
 		user.verified = data.email ? true : false;
 
