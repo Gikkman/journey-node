@@ -17,7 +17,7 @@ module.exports = function(Passport, MySQL, Config) {
     Passport.use(new TwitchStrategy({
             clientID: Config.twitch_client_id,
             clientSecret: Config.twitch_client_secret,
-            callbackURL: "http://localhost:3000/auth/twitch",
+            callbackURL: Config.twitch_redir_url,
             scope: "user_read"
         },
         

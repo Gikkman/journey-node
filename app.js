@@ -35,7 +35,6 @@ global.modules = path.resolve(__dirname+"/modules/");
 //==    Config
 //=======================================================
 var _config_mode = process.env.NODE_ENV === "production" ? 'prod' : 'dev';
-console.log(_config_mode);
 var _config = require("./config.json")[_config_mode];
 
 //=======================================================
