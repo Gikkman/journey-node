@@ -1,23 +1,33 @@
-const JP_URL = '/jp';
-module.exports = function(App, MySQL){
-	var Twitch 		 		= require(modules + "/twitch");
-	var UserDatabase  		= require(modules + "/user_database.js")(MySQL);
-	var TokenDatabase 		= require(modules + "/token_database.js")(MySQL); 
-	var SubmissionsDatabase = require(modules + "/submissions_database.js")(MySQL);
+const JP_URL = '/tjp';
 
-	var index = require('./index.js');
-	var auth  = require('./auth.js')(Twitch, UserDatabase, TokenDatabase);
-	var submit= require('./submit.js')(TokenDatabase);
-	var act   = require('./ajax.js')(TokenDatabase, SubmissionsDatabase);
+var URL = require("url");
+
+module.exports = function(App, Passport, MySQL, Config){
+	var TokenDatabase 		= require("../modules/token_database.js")(MySQL); 
+	var SubmissionsDatabase = require("../modules/submissions_database.js")(MySQL);
+
+	var ajax = require('./ajax.js')(TokenDatabase, SubmissionsDatabase);
+	var auth = require('./auth.js')(Passport, JP_URL);
+    
+    var index = require('./index.js');
+	var submit= require('./submit.js')(TokenDatabase, MySQL);
+    var login = require('./login.js');
 
 	// default redirect
 	App.get('/', (req, res) => {
 		res.redirect(JP_URL);
 	});
+    App.use('/auth', auth);
+    App.use('/ajax', ajax);
 
 	// routes
-	App.use(JP_URL,              index);
-	App.use(JP_URL + '/auth',    auth);
-	App.use(JP_URL + '/submit',  submit);
-	App.use(JP_URL + '/ajax',    act);
-}
+	App.use(JP_URL,  index);
+	App.use(JP_URL + '/submit', submit);
+    App.use(JP_URL + '/login',  login);
+	
+
+    // ==============================================================
+	// TWITCH LOGIN 
+	// ==============================================================
+	
+};

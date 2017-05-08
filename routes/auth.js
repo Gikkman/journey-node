@@ -1,61 +1,33 @@
 var express = require('express');
 
-const REDIRECT_KEY = "twitch";
-module.exports = function(Twitch, UserDatabase, TokenDatabase){
+module.exports = function(Passport, BASE_URL){
 	var router = express.Router();
 
-	router.get('/', (req, res) => {
-		//TODO: Render a "login with twitch" page
-		res.redirect('auth/twitch');
-	});
-
-	router.get('/twitch', function(req, res) {
-		//If this requrest comes from Twitch's servers
-		if( req.query.state == REDIRECT_KEY ) {
-	  		Twitch.authenticate( req.query.code,
-	  			(error) => {
-	  				errorResponse(res, error, "If you do not log in with Twitch, you won't be able to make submissions")
-		  		},
-		  		(data) => {
-					Twitch.readPlayer(data.access_token, 
-						(error) => {
-							errorResponse(res, error, "Error reading user data from Twitch")
-						},
-						(data) => {
-							UserDatabase.findOrCreate(data, 
-								(error) => {
-									errorResponse(res, error, "Find or Create player failed")
-								},
-								(user) => {
-									if( user.verified ){
-									   	var token = TokenDatabase.prepareToken(user, 
-									   		(error) => {
-												errorResponse(res, error, "Could not prepare a submission token")
-									   		}, 
-									   		(token) => {
-												res.redirect('/jp/submit?token=' + token);
-								   			}
-								   		);
-								    } else {
-								    	errorResponse(res, null, "It appears your email is not verified by Twitch. Please make sure you verify your email adres at Twitch")
-								    }
-								}
-							);
-						}
-					);
-		  		}	  		
-	  		);
-		//If this request doesn't come from Twitch's server
-		} else {
-		  	var url = Twitch.getAuthUrl(REDIRECT_KEY);
-	  		res.redirect(url);
-	  	}	
-	});
+	router.get('/twitch', 
+        Passport.authenticate(
+            "twitch", 
+            {   forceVerify:true, 
+                failureRedirect: BASE_URL + "/login" }
+        ), 
+        (req, res) => {
+            // Successful authentication, redirect to the login request's origin
+            var origin = req.session.req_origin;   
+            req.session.req_origin = null;
+            if(!origin) {
+                 //if origin is null or undefined, the redirect bellow will fail
+                origin = BASE_URL; 
+            }
+            console.log("--- Logged in: " + req.user.display_name + " - Origin: " + origin);    
+            res.redirect(origin);
+        }
+    );
+    
+    router.get('/twitch/:origin', (req, res) => {
+            // Store the login origin, so we can redirect there at a later time
+            req.session.req_origin = BASE_URL + '/' + req.params.origin;
+            res.redirect('/auth/twitch');
+        }
+    );
 
 	return router;
-}
-
-function errorResponse(res, error, message){
-	var title = error ? error.message : "";
-	res.render('message', {title: error.message, status: 1002, message:message});
-}
+};

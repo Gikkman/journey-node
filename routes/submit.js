@@ -1,23 +1,30 @@
 var express = require('express');
-module.exports = function(TokenDatabase){
+module.exports = function(TokenDatabase, MySQL){
 	var router = express.Router();
 
-	router.get('/', function(req, res) {
-		var token = req.query.token;
-		if( token ){
-			var submissions = TokenDatabase.submissionsFromToken(token,
-				(error) => {
-					errorResponse(res, error, "Could not fetch previous submission(s)")
-				},
-				(submissions) => {
-					res.render('form', {token: token, submission: submissions[0]});
-				} 
-			);			
-		}				
-		else
-			res.redirect('auth');
-	});
+	router.get('/', isAuthenticated, async (req, res) => {
+        try{
+            var user = req.user;          
+
+            var token = await TokenDatabase.createToken(user);
+            var submissions = await TokenDatabase.submissionsFromToken(token);
+
+            res.render('submit', {token: token, submission: submissions[0]});
+            console.log('--- Submission successful! User: ' + user.display_name);
+        } catch (e) {
+            errorResponse(res, e, "Unexpected error when setting up submission form");
+        }
+	}); 
+    
 	return router;
+};
+
+function isAuthenticated(req, res, next){
+    if(req.isAuthenticated())
+        next();
+    else
+        
+        res.redirect('/auth/twitch/submit');
 }
 
 function errorResponse(res, error, message){

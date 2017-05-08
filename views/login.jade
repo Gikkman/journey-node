@@ -1,0 +1,10 @@
+extends layout
+
+block nav
+    +nav_bar('')
+
+block content
+    h1(style="text-align:center") To proceed, you need to login with Twitch
+    br
+    div(style="text-align:center")
+        button.btn-primary#login-button(style="padding: 15px 32px") Login  

@@ -1,30 +1,35 @@
 {
 	"dev": {
-		"debug"				  : true,
+		"debug"                 : true,
 
-		"twitch_redir_url"	  : "http://localhost:3000/jp/auth/twitch",
-		"twitch_client_id"	  : "cxro6oyuwr4zujxntvqzd7idi6wodiw",
-		"twitch_client_secret": "2amd9xnwdmmz3m3jaejbb747zdorw6h",
+		"twitch_redir_url"      : "http://localhost:3000/auth/twitch",
+		"twitch_client_id"      : "wel8cwxmfae2pii0djia9gv78qhc0x",
+		"twitch_client_secret"  : "0f8dyqjvq7an7zhn5hg93m5mmmi6fm",
 		
-
-		"mysql_password"	  : "password",
-		"mysql_user"		  : "user",
-		"mysql_schema"		  : "journey",
-		"mysql_port"		  : 3306,
-		"mysql_host"		  : "127.0.0.1"
+		"mysql_password"        : "password",
+		"mysql_user"            : "user",
+		"mysql_schema"          : "journey",
+		"mysql_port"            : 3306,
+		"mysql_host"            : "127.0.0.1",
+		
+		"api_key"               : "password",
+        "session_secret"        : "secret"
 	},
 	"prod": {
-		"debug"				  : false,
+		"debug"                 : false,
 
-		"twitch_redir_url"	  : "",
-		"twitch_client_id"	  : "",
-		"twitch_client_secret": "",
+		"twitch_redir_url"      : "",
+		"twitch_client_id"      : "",
+		"twitch_client_secret"  : "",
 		
 
-		"mysql_password"	  : "",
-		"mysql_user"		  : "",
-		"mysql_schema"		  : "",
-		"mysql_port"		  : 0,
-		"mysql_host"		  : ""
+		"mysql_password"        : "",
+		"mysql_user"            : "",
+		"mysql_schema"          : "",
+		"mysql_port"            : 0,
+		"mysql_host"            : "",
+		
+		"api_key"               : "",
+        "session_secret"        : ""
 	}
 }

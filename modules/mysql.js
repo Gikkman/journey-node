@@ -27,7 +27,7 @@ module.exports = function(Config){
 				});	
 			}
 		});
-	}
+	};
 
 	obj.shutdown = function(){
 		pool.end( (err) => {
@@ -38,7 +38,24 @@ module.exports = function(Config){
 				console.log("Database shutdown successful " + new Date());
 			}
 		});
-	}
+	};
+
+    obj.queryAsync = async (query, args) => {
+        return new Promise((resolve, reject) => {
+            pool.getConnection( function(err, conn) {
+                if(err) reject(err);
+                else{
+                    conn.query(query, args, function(_err, results, fields){
+                        //Release connection
+                        conn.release();
+
+                        if(_err) reject(_err);
+                        else resolve(results);
+                    });
+                }
+            });
+        });
+    };
 
 	return obj;
-}
+};

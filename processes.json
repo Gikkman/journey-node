@@ -5,12 +5,11 @@
     "watch"        : true,
     "log_date_format" : "YYYY-MM-DD HH:mm:ss",
     "env": {  
-        "PORT": 3000,
-        "JOURNEY_CONFIG": "dev"
+        "PORT": 3000
     },
     "env_prod" : {
        "PORT": 3000,
-       "JOURNEY_CONFIG": "prod" 
+       "NODE_ENV": "production" 
     }
   }]
 } 
