@@ -4,7 +4,7 @@
 //==    External imports
 //=======================================================
 var express = require('express');
-var session  = require('express-session');
+var session  = require('cookie-session');
 var cookieParser = require('cookie-parser');
 var path = require('path');
 var favicon = require('serve-favicon');
@@ -47,9 +47,10 @@ var _mysql  = require("./modules/mysql.js")(_config);
 //=======================================================
 require("./modules/passport")(passport, _mysql, _config); //Configure passport
 app.use(session({
+    name: 'session',
 	secret: _config.session_secret,
-	resave: true,
-	saveUninitialized: true
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
  } ));
 app.use(passport.initialize());
 app.use(passport.session());

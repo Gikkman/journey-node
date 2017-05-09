@@ -17,7 +17,7 @@ module.exports = function(Passport, BASE_URL){
                  //if origin is null or undefined, the redirect bellow will fail
                 origin = BASE_URL; 
             }
-            console.log("--- Logged in: " + req.user.display_name + " - Origin: " + origin);    
+            console.log("--- Logged in: " + req.user.display_name + " - Navigate: " + origin);    
             res.redirect(origin);
         }
     );
