@@ -22,11 +22,10 @@ function isAuthenticated(req, res, next){
     if(req.isAuthenticated())
         next();
     else
-        
         res.redirect('/auth/twitch/submit');
 }
 
 function errorResponse(res, error, message){
 	var title = error ? error.message : "";
-	res.render('message', {title: title, status: 1003, message:message});
+	res.render('error', {title: title, status: 1003, message:message});
 }

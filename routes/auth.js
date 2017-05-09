@@ -10,6 +10,16 @@ module.exports = function(Passport, BASE_URL){
                 failureRedirect: BASE_URL + "/login" }
         ), 
         (req, res) => {
+            if(!req.user.verified){
+                req.logout();
+                res.render('error', 
+                           {   title: 'Authentication error',
+                               status: 'Unverified email',
+                               message: 'To user these servies, you need to have an email that is verified by Twitch' }
+                );
+                return;
+            }
+            
             // Successful authentication, redirect to the login request's origin
             var origin = req.session.req_origin;   
             req.session.req_origin = null;

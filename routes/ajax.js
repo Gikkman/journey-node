@@ -56,6 +56,6 @@ function errorResponse(res, error, message){
 	res.render('message', 
             {   title: title, 
                 status: 1001,
-                message:message}
+                message:message }
     );
 }
