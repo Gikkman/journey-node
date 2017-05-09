@@ -34,6 +34,7 @@ module.exports = function(TokenDatabase, SubmissionDatabase){
                         message: "Thank you for submitting a quest to The Journey Project.\nMuch appreciated"
                     } 
             );
+            console.log('--- Submission successful! User: ' + user.display_name);
         } catch (e) {
             errorResponse(res, e, "Unexpected error when inserting a submission");
         }           

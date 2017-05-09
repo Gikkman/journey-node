@@ -10,7 +10,6 @@ module.exports = function(TokenDatabase, MySQL){
             var submissions = await TokenDatabase.submissionsFromToken(token);
 
             res.render('submit', {token: token, submission: submissions[0]});
-            console.log('--- Submission successful! User: ' + user.display_name);
         } catch (e) {
             errorResponse(res, e, "Unexpected error when setting up submission form");
         }
