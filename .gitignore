@@ -27,3 +27,4 @@ benchmarks/graphs
 
 # Specifics
 /nbproject/
+/secret/

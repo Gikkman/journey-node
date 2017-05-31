@@ -1,5 +1,5 @@
 var express = require('express');
-module.exports = function(TokenDatabase, MySQL){
+module.exports = function(TokenDatabase){
 	var router = express.Router();
 
 	router.get('/', isAuthenticated, async (req, res) => {
@@ -27,5 +27,5 @@ function isAuthenticated(req, res, next){
 
 function errorResponse(res, error, message){
 	var title = error ? error.message : "";
-	res.render('error', {title: title, status: 1003, message:message});
+	res.render('error', {title: title, status: 1001, message:message});
 }

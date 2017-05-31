@@ -21,8 +21,8 @@ body {
 }
 
 
-/* Custom page CSS
--------------------------------------------------- */
+/* Custom page CSS */
+/*-------------------------------------------------- */
 /* Not required for template or sticky footer method. */
 hr {
     margin-top: 21px;
@@ -46,4 +46,16 @@ body > .container {
 
 code {
   font-size: 80%;
+}
+
+/* FAQ page CSS */
+/*-------------------------------------------------- */
+.fake-link {
+    color: #18bc9c;
+}
+.fake-link:hover {
+    text-decoration: underline !important;
+}
+.locked-left {
+	width:15%;
 }
