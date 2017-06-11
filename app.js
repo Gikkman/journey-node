@@ -35,7 +35,7 @@ global.modules = path.resolve(__dirname+"/modules/");
 //==    Config
 //=======================================================
 var _config_mode = process.env.NODE_ENV === "production" ? 'prod' : 'dev';
-console.log('Server starting. Config mode: ' + _config_mode);
+console.log('--- Server starting. Config mode: ' + _config_mode);
 var _config = require("./secret/config.json")[_config_mode];
 
 //=======================================================
@@ -102,7 +102,7 @@ function onUncaughtException(ex) {
 }
 function onExit(code) {
   _mysql.shutdown();
-  console.log("Shutting down with code " + code );
+  console.log("--- Shutting down with code " + code );
 }
 
 //=======================================================
