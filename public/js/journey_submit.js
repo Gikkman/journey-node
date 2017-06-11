@@ -40,7 +40,7 @@ function submitForm(){
 		}
 	});
 
-	if( valid )
+	if( valid ){
 		$.ajax({
             url: AJAX_URL + "/submit",
             data: obj,
@@ -54,5 +54,6 @@ function submitForm(){
                $("div.main-content").replaceWith(data);
             }
         });
+    }
 }
 

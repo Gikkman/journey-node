@@ -21,8 +21,8 @@ body {
 }
 
 
-/* Custom page CSS
--------------------------------------------------- */
+/* Custom page CSS */
+/*-------------------------------------------------- */
 /* Not required for template or sticky footer method. */
 hr {
     margin-top: 21px;
@@ -46,4 +46,44 @@ body > .container {
 
 code {
   font-size: 80%;
+}
+
+/* FAQ page CSS */
+/*-------------------------------------------------- */
+.fake-link {
+    color: #18bc9c;
+}
+.fake-link:hover {
+    text-decoration: underline !important;
+}
+.locked-left {
+	width:15%;
+}
+    
+table{
+    width: 100%;
+}
+.ctr {
+    text-align: center;
+}
+.declaration-row{
+    border-top: 1px solid #ddd;
+    vertical-align: central;
+    height: 30px;
+}
+.description-row{
+    vertical-align: central;
+    padding: 5px 0;
+}
+.example-row{
+    vertical-align: central;
+    border-bottom: 1px solid #ddd;
+    height: 50px;
+}
+.monospace{
+    font-family: monospace;
+	font-size: 16px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 400;
 }

@@ -35,7 +35,7 @@ global.modules = path.resolve(__dirname+"/modules/");
 //==    Config
 //=======================================================
 var _config_mode = process.env.NODE_ENV === "production" ? 'prod' : 'dev';
-var _config = require("./config.json")[_config_mode];
+var _config = require("./secret/config.json")[_config_mode];
 
 //=======================================================
 //==    Database
@@ -49,7 +49,7 @@ require("./modules/passport")(passport, _mysql, _config); //Configure passport
 app.use(session({
     name: 'session',
 	secret: _config.session_secret,
-    sameSite: 'lax',
+    sameSite: false,
     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
  } ));
 app.use(passport.initialize());

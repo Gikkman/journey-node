@@ -1,15 +1,26 @@
 var TwitchStrategy = require("passport-twitch").Strategy;
 
+var SELECT_USER_QUERY = 
+    "SELECT " + 
+        "u.user_id, u.last_seen, u.user_name, u.display_name, u.type, "+
+        "u.verified, uv.gold_current, uv.gold_lifetime, us.editor " +
+    "FROM users AS u " +
+    "LEFT JOIN user_variables AS uv ON u.user_id = uv.user_id " +
+    "LEFT JOIN user_statuses AS us ON u.user_id = us.user_id " +
+    "WHERE u.user_id = ? ";
+
 // expose this function to our app using module.exports
 module.exports = function(Passport, MySQL, Config) {
-
     Passport.serializeUser(function(user, done) {
         done(null, user.user_id);
     });
 
     Passport.deserializeUser(function(user_id, done) {
-        MySQL.query("SELECT * FROM users WHERE user_id = ? ",[user_id], function(err, rows){
-            done(err, rows[0]);
+        MySQL.query(SELECT_USER_QUERY, [user_id],             
+        function(err, rows){
+            let user = rows[0];
+            user.can_edit = user.editor | user.type === 'mod' | user.type === 'owner';
+            done(err, user);
         });
     });
 
@@ -48,7 +59,7 @@ function findOrCreateTwitch(profile, done, MySQL){
 };
 
 function postInsertUpdate(profile, MySQL, done){
-    MySQL.query('SELECT * FROM users WHERE user_id = ?', [profile.id],
+    MySQL.query(SELECT_USER_QUERY, [profile.id],
         (err, rows) => {
             if( err )
                 done(err);

@@ -21,8 +21,11 @@ mixin bootstrap()
 //--------------------------------------------------------
 mixin nav_bar(tab)
     +nav("Journey Project", "dropdown_menu")
-        +nav_item( "/", tab === 'home' ) Home
+        +nav_item( "", tab === 'home' ) Home
         +nav_item( "/submit", tab === 'submit') Submit
+        +nav_item_dropdown( "", tab === 'help')( label="FAQ")
+            +nav_item("/faq") FAQ
+            +nav_item("/faq/commands") Commands
         
 
 mixin nav(name, id, style)
@@ -35,7 +38,7 @@ mixin nav(name, id, style)
                     span.icon-bar
                     span.icon-bar
                     span.icon-bar
-                a.navbar-brand(href=URL)= name
+                a.navbar-brand(href=URL)=name
      
             .collapse.navbar-collapse( id=id )
                 ul.nav.navbar-nav
@@ -46,7 +49,7 @@ mixin nav_item(href, active)
         block
  
 mixin nav_item_dropdown(href, active)
-    li(class=["dropdown", active])
+    li(class=["dropdown", active ? "active" : ""])
         a.dropdown-toggle( href=URL + href, data-toggle="dropdown", role="button", aria-expanded="false" )= attributes.label
             span.caret
         ul.dropdown-menu( role="menu" )
@@ -104,38 +107,30 @@ mixin panel(heading, style)
 //--------------------------------------------------------
 //---   Form mixins
 //--------------------------------------------------------
-mixin text-field(label, id, placeholder)
-    label.control-label.col-sm-2(for=id) label
-        .col-sm-10
-            input.form-control(id=id,placeholder=placeholder)
+mixin text-area (label, id, value, placeholder, rows)
+    label.bmd-label-floating(for=id) #{label}
+    textarea.form-control(id=id, rows=rows, placeholder=placeholder)
+        |#{value}
 
-mixin text-field-required(label, id, placeholder)
-    label.control-label.col-sm-2(for=id) label
-        .col-sm-10
-            input.form-control(id=id,placeholder=placeholder)
+mixin text-field(label, id, value, value, placeholder)
+    label.bmd-label-floating(for=id) #{label}
+    input.form-control(id=id, type='text', value=value, placeholder=placeholder)
 
-mixin submit-button
-    .form-group
-        .col-sm-offset-2.col-sm-10
-            button.btn.btn-default(type='submit') Submit
+mixin text-field-required(label, id, value, placeholder)
+    label.bmd-label-floating(for=id) #{label}
+    input.form-control(id=id, type='text', value=value, placeholder=placeholder, required)
 
 mixin game-form(prio, game)
     - var g = (typeof game === 'undefined') ? {} : game
     //- h2 Prio #{prio}
     form.form-horizontal(id='prio-'+prio)
         .form-group.bmd-form-group
-            label.bmd-label-floating(for='title') Title (required)
-            input.form-control(id='title', type='text', value=g.title, placeholder='Enter title (required)', required='')
+            +text-field-required('Title', 'title', g.title, 'Enter title (required)')
         .form-group.bmd-form-group
-            label.bmd-label-floating(for='system') System (required)
-            input.form-control(id='system', type='text', value=g.system placeholder='Enter system (required)', required='')
+            +text-field-required('System', 'system', g.system, 'Enter system (required)')
         .form-group.bmd-form-group
-            label.bmd-label-floating(for='goal') Goal
-            input.form-control(id='goal', type='text', value=g.goal, placeholder='Enter goal')
+            +text-field('Goal', 'goal', g.goal, 'Enter goal')
         .form-group.bmd-form-group
-            label.bmd-label-floating(for='comments') Comments
-            textarea.form-control(id='comments', rows='3', placeholder='Enter comments')
-                |#{g.comments}
+            +text-area('Comments','comments',g.comments,'Enter comments',3)
         .form-group 
             input(id='prio',  type='hidden', value=prio)
-//- End forms
