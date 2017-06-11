@@ -61,9 +61,9 @@ structureFaQ = async (MySQL) => {
 };
 
 structureCommands = async (MySQL) => {
-    let categories = await MySQL.queryAsync('SELECT category FROM ' +
-                                            'faq_commands_category ' +
-                                            'ORDER BY weight ASC'); 
+    let categories = await MySQL.queryAsync(
+            'SELECT category, display_name_override AS name, description FROM ' +
+            'faq_commands_category ORDER BY weight ASC'); 
     let output = [];
     let query = 'SELECT ' +
                 'command, flag, parameters, example, description, ' +
@@ -77,11 +77,13 @@ structureCommands = async (MySQL) => {
         let node = {};
         
         // Set the topic for this node
-        let category = categories[i].category;
-        node.category = category;
+        let c = categories[i];
+        node.id = c.category;
+        node.name = c.name ? c.name : c.category;
+        node.description = c.description;
         
         // Iterate all Q&A for this topic
-        let content = await MySQL.queryAsync(query, [category]); 
+        let content = await MySQL.queryAsync(query, [node.id]); 
         let data = {};
         for( let j = 0; j < content.length; j++){
             let command = content[j].command;

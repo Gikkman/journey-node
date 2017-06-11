@@ -69,7 +69,7 @@ table{
 .declaration-row{
     border-top: 1px solid #ddd;
     vertical-align: central;
-    height: 30px;
+    height: 40px;
 }
 .description-row{
     vertical-align: central;
@@ -78,7 +78,11 @@ table{
 .example-row{
     vertical-align: central;
     border-bottom: 1px solid #ddd;
-    height: 50px;
+    height: 40px;
+}
+.example-text{
+    font-weight: 900; 
+    font-size: 13px;
 }
 .monospace{
     font-family: monospace;

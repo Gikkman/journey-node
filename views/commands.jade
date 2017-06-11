@@ -4,17 +4,18 @@ block nav
     +nav_bar('help')
     
 block content     
-    .col-md-2.visible-md-block.visible-lg-block.locked-left
+    .col-md-2.hidden-xs.hidden-sm.locked-left
         .affix
-            each val in topics
-                h4.fake-link(onClick="javascript:navigate("+val.category+")")= val.category
+            each node in categories
+                h4.fake-link(onClick="javascript:navigate('"+node.id+"')")= node.name
             
     .col-md-10    
-        each val in topics
-            div(id=val.category)  
-                h3= val.category
-                each arr, cmd in val.commands
-                    h4(style="padding: 0 25px 0")= cmd
+        each node in categories
+            div(id=node.id)  
+                h3= node.name
+                if(node.description)
+                    p=node.description
+                each cmds, key in node.commands
                     table
                         col.hidden-xs.hidden-sm(style="width:120px")
                         col(style="width:100px")
@@ -29,10 +30,10 @@ block content
                             th='Cooldown'
                             th='Cost'
                             th.cr='Rank'
-                        each line in arr
+                        each line in cmds
                             ///The formal command declaration
                             tr.declaration-row.monospace
-                                td.hidden-xs.hidden-sm= cmd
+                                td.hidden-xs.hidden-sm=key
                                 td 
                                     i= line.flag
                                 td.hidden-xs.hidden-sm=  line.parameters
@@ -56,9 +57,9 @@ block content
                             ///Example
                             tr.example-row
                                 td(colspan='5')
-                                    strong(style="font-size: 13px;")='Example: '
-                                    br
-                                    .monospace= line.example
+                                    span.example-text='Example: '
+                                    span.monospace= line.example
+                    br
                         
                 
     script(type='text/javascript' src='/js/journey_faq.js')

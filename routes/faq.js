@@ -13,7 +13,8 @@ module.exports = function(FaqDatabase){
 	}); 
     
     router.get('/commands', async (req, res) => {
-        res.render('commands', {topics: commands_cache} );
+        res.render('commands', {categories: commands_cache, 
+                                replies: reply_commands_cache} );
 	}); 
     
     router.get('/reload', async (req, res) => {
