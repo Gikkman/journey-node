@@ -112,7 +112,7 @@ mixin text-area (label, id, value, placeholder, rows)
     textarea.form-control(id=id, rows=rows, placeholder=placeholder)
         |#{value}
 
-mixin text-field(label, id, value, value, placeholder)
+mixin text-field(label, id, value, placeholder)
     label.bmd-label-floating(for=id) #{label}
     input.form-control(id=id, type='text', value=value, placeholder=placeholder)
 
