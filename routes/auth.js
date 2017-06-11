@@ -6,8 +6,7 @@ module.exports = function(Passport, BASE_URL){
 	router.get('/twitch', 
         Passport.authenticate(
             "twitch", 
-            {   forceVerify:true, 
-                failureRedirect: BASE_URL + "/login" }
+            { failureRedirect: BASE_URL + "/login" }
         ), 
         (req, res) => {
             if(!req.user.verified){

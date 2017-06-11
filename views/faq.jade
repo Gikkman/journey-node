@@ -7,14 +7,17 @@ block content
     .col-md-2.visible-md-block.visible-lg-block.locked-left
         .affix
             each val in topics
-                h4.fake-link(onClick="javascript:navigate("+val.topic+")")= val.topic
+                h4.fake-link(onClick="javascript:navigate("+val.category+")")= val.category
             
     .col-md-10    
         each val in topics
-            div(id=val.topic)  
-                h3= val.topic
+            div(id=val.category)  
+                h3= val.category
                 each elem in val.data
                     strong= elem.q
-                    p= elem.a
+                    p
+                        each line in elem.a.split(/\n/)
+                            = line
+                            br
                 
     script(type='text/javascript' src='/js/journey_faq.js')

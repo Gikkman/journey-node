@@ -7,14 +7,58 @@ block content
     .col-md-2.visible-md-block.visible-lg-block.locked-left
         .affix
             each val in topics
-                h4.fake-link(onClick="javascript:navigate("+val.topic+")")= val.topic
+                h4.fake-link(onClick="javascript:navigate("+val.category+")")= val.category
             
     .col-md-10    
         each val in topics
-            div(id=val.topic)  
-                h3= val.topic
-                each elem in val.data
-                    strong= elem.q
-                    p= elem.a
+            div(id=val.category)  
+                h3= val.category
+                each arr, cmd in val.commands
+                    h4(style="padding: 0 25px 0")= cmd
+                    table
+                        col.hidden-xs.hidden-sm(style="width:120px")
+                        col(style="width:100px")
+                        col.hidden-xs.hidden-sm(style="width:0")
+                        col(style="width:120px")
+                        col(style="width:120px")
+                        col(style="width:55px")
+                        tr
+                            th.hidden-xs.hidden-sm='Command'
+                            th='Flag'
+                            th.hidden-xs.hidden-sm='Parameters'
+                            th='Cooldown'
+                            th='Cost'
+                            th.cr='Rank'
+                        each line in arr
+                            ///The formal command declaration
+                            tr.declaration-row.monospace
+                                td.hidden-xs.hidden-sm= cmd
+                                td 
+                                    i= line.flag
+                                td.hidden-xs.hidden-sm=  line.parameters
+                                td 
+                                    if(line.cooldown) 
+                                        i= line.cooldown
+                                td 
+                                    if(line.cost)
+                                        strong= line.cost
+                                td
+                                    if(line.rank)
+                                        =line.rank
+                                    else
+                                        ='Any'
+                            ///Literal explanation
+                            tr.description-row
+                                td(colspan='5', style="padding:5px 0")
+                                    each l in line.description.split(/\n/)
+                                        = l
+                                        br
+                            ///Example
+                            tr.example-row
+                                td(colspan='5')
+                                    strong(style="font-size: 13px;")='Example: '
+                                    br
+                                    .monospace= line.example
+                        
                 
     script(type='text/javascript' src='/js/journey_faq.js')

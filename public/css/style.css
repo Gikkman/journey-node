@@ -59,3 +59,31 @@ code {
 .locked-left {
 	width:15%;
 }
+    
+table{
+    width: 100%;
+}
+.ctr {
+    text-align: center;
+}
+.declaration-row{
+    border-top: 1px solid #ddd;
+    vertical-align: central;
+    height: 30px;
+}
+.description-row{
+    vertical-align: central;
+    padding: 5px 0;
+}
+.example-row{
+    vertical-align: central;
+    border-bottom: 1px solid #ddd;
+    height: 50px;
+}
+.monospace{
+    font-family: monospace;
+	font-size: 16px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 400;
+}

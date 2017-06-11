@@ -18,7 +18,9 @@ module.exports = function(Passport, MySQL, Config) {
     Passport.deserializeUser(function(user_id, done) {
         MySQL.query(SELECT_USER_QUERY, [user_id],             
         function(err, rows){
-            done(err, rows[0]);
+            let user = rows[0];
+            user.can_edit = user.editor | user.type === 'mod' | user.type === 'owner';
+            done(err, user);
         });
     });
 

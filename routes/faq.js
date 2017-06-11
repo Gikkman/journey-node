@@ -2,6 +2,7 @@ var express = require('express');
 
 var faq_cache = {};
 var commands_cache = {};
+var reply_commands_cache = {};
 
 module.exports = function(FaqDatabase){
 	var router = express.Router();
@@ -16,13 +17,8 @@ module.exports = function(FaqDatabase){
 	}); 
     
     router.get('/reload', async (req, res) => {
-        let key = req.query.key;
-        if( key === 'hello'){
-            await reloadCache(FaqDatabase);
-            res.send("Success");
-        } else {
-            res.send("Fail");
-        }
+        await reloadCache(FaqDatabase);
+        res.send("OK");
     });
     
     
@@ -31,8 +27,12 @@ module.exports = function(FaqDatabase){
 
 async function reloadCache(FaqDatabase){
     try{
-        let newCache = await FaqDatabase.getFaQ();
-        faq_cache = newCache;
+        let newFaq = await FaqDatabase.getFaQ();
+        faq_cache = newFaq;
+        let newCmd = await FaqDatabase.getCommands();
+        commands_cache = newCmd;
+        let newReplies = await FaqDatabase.getInfoCommands();
+        reply_commands_cache = newReplies;
     } catch (e) {
         console.error(e);
         return;
