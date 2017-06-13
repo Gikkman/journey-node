@@ -8,6 +8,7 @@ module.exports = function(RaffleDatabase){
     
 	router.get('/:index', async (req, res) => {
         let index = req.params.index;
+        
         if( reg.test(index) ){
             let data = await getRaffleIndex(index, RaffleDatabase);
             res.render('raffle', {index: index, data: data} );
@@ -21,13 +22,17 @@ module.exports = function(RaffleDatabase){
 };
 
 async function getRaffleIndex(index, RaffleDatabase){
+    // We haven't logged any raffles bellow 50 anyway
+    if( index < 50 )
+        return;
+    
     try{
-        if(!raffle_cache.index){
+        if(!raffle_cache[index]){
             let data = await RaffleDatabase.readRaffle(index);
             if(data)
-                raffle_cache.index = data;
+                raffle_cache[index] = data;
         }
-        return raffle_cache.index;
+        return raffle_cache[index];
     } catch (e) {
         console.error(e);
         return;
