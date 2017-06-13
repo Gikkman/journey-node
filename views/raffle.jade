@@ -1,0 +1,47 @@
+extends layout
+
+block nav
+    +nav_bar('')
+    
+block content  
+    if(data)
+        h1.hidden-xs.hidden-sm(style="padding-bottom:15px")="Raffle #"+index
+        .col-md-12.hidden-md.hidden-lg
+            h3="Winning ticket: " + data.winning_ticket
+            br
+        .col-md-4
+            table
+                tr
+                    th="Ticket"
+                    th="User"
+                    th="Description"
+                each ticket in data.tickets
+                    tr
+                        if(ticket.ticket_id === data.winning_ticket)
+                            td(style="font-weight: bold;")=ticket.ticket_id
+                            td(style="font-weight: bold;")=ticket.display_name
+                            td(style="font-weight: bold;")=ticket.reason
+                        else
+                            td=ticket.ticket_id
+                            td=ticket.display_name
+                            td=ticket.reason
+            br.hidden-md.hidden-lg
+        .col-md-4.hidden-xs.hidden-sm
+            h3="Winning ticket: " + data.winning_ticket
+            br
+            strong="Blocked this raffle"
+            table
+                each block in data.blocked
+                    tr
+                        td=block.display_name
+                        td=block.reason
+        .col-md-4.hidden-md.hidden-lg
+            strong="Blocked this raffle"
+            table
+                each block in data.blocked
+                    tr
+                        td=block.display_name
+                        td=block.reason                
+        
+    else
+        h1="No raffle " + index + "logged"
