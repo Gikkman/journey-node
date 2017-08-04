@@ -7,7 +7,7 @@ block content
     .col-md-2.visible-md-block.visible-lg-block.locked-left
         .affix
             each val in topics
-                h4.fake-link(onClick="javascript:navigate("+val.category+")")= val.category
+                h4.fake-link(onClick='javascript:navigate("'+val.category+'")')= val.category
             
     .col-md-10    
         each val in topics
