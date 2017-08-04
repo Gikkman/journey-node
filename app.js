@@ -12,6 +12,7 @@ var logger = require('morgan');
 var helmet = require('helmet');
 var bodyParser = require('body-parser');
 var passport = require('passport');
+var markdown = require('marked');
 
 //=======================================================
 //==    App config
@@ -24,6 +25,11 @@ app.use(bodyParser.json());
 app.use(logger('dev'));
 app.use(cookieParser());
 app.use(express.static( path.join(__dirname, 'public')));
+
+markdown.setOptions({
+   breaks: true
+});
+app.locals.markdown = markdown;
 
 //=======================================================
 //==    Assign globals

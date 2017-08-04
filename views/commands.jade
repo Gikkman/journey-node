@@ -51,9 +51,7 @@ block content
                             ///Literal explanation
                             tr.description-row
                                 td(colspan='5', style="padding:5px 0")
-                                    each l in line.description.split(/\n/)
-                                        = l
-                                        br
+                                    != markdown(line.description)
                             ///Example
                             tr.example-row
                                 td(colspan='5')

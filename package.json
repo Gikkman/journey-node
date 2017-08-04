@@ -14,6 +14,7 @@
     "helmet": "*",
     "jade": "~1.11.0",
     "serve-favicon": "~2.3.0",
+    "marked": "0.3.6",
     "mysql": "~2.12.0",
     "uuid": "~3.0.0",
     "passport": "^0.2.2",

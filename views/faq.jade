@@ -3,7 +3,7 @@ extends layout
 block nav
     +nav_bar('help')
     
-block content     
+block content
     .col-md-2.visible-md-block.visible-lg-block.locked-left
         .affix
             each val in topics
@@ -15,9 +15,6 @@ block content
                 h3= val.category
                 each elem in val.data
                     strong= elem.q
-                    p
-                        each line in elem.a.split(/\n/)
-                            = line
-                            br
+                    p!=markdown(elem.a)
                 
     script(type='text/javascript' src='/js/journey_faq.js')
