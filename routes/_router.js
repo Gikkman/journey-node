@@ -6,7 +6,7 @@ module.exports = function(App, Passport, MySQL, Config){
     var FaqDatabase         = require("../modules/faq_database.js")(MySQL);
     var RaffleDatabase      = require("../modules/raffle_database.js")(MySQL);
 
-	var ajax = require('./ajax.js')(TokenDatabase, SubmissionsDatabase);
+	var ajax = require('./ajax.js')(MySQL);
 	var auth = require('./auth.js')(Passport, JP_URL);
     
     var index = require('./index.js');

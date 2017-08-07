@@ -25,14 +25,14 @@ module.exports = function(MySQL){
     };
 
 	const OLD = 30*60*1000;
-	mod.validateToken = async (token) => {
+	mod.validateToken = async (token, user_id) => {
         var data = {};
 		var rows = await MySQL.queryAsync(
                 'SELECT u.user_id, u.display_name FROM submissiontokens AS t ' +
                 'INNER JOIN ( SELECT user_id, display_name FROM users ) AS u ' +
                 'ON t.user_id = u.user_id ' +
-                'WHERE t.token = ?',
-                [token] );
+                'WHERE t.token = ? AND user_id = ?',
+                [token, user_id] );
         //If we didn't get a token (i.e. the token didn't exist)
         if(rows.length === 0){
             data.valid = false;
@@ -44,8 +44,6 @@ module.exports = function(MySQL){
         //If this token is fresh enough
         else {
             data.valid = true;
-            data.user_id = rows[0].user_id;
-            data.display_name = rows[0].display_name;
         }
         return data;
 	};
