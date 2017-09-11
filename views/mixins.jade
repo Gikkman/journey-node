@@ -119,18 +119,3 @@ mixin text-field(label, id, value, placeholder)
 mixin text-field-required(label, id, value, placeholder)
     label.bmd-label-floating(for=id) #{label}
     input.form-control(id=id, type='text', value=value, placeholder=placeholder, required)
-
-mixin game-form(prio, game)
-    - var g = (typeof game === 'undefined') ? {} : game
-    //- h2 Prio #{prio}
-    form.form-horizontal(id='prio-'+prio)
-        .form-group.bmd-form-group
-            +text-field-required('Title', 'title', g.title, 'Enter title (required)')
-        .form-group.bmd-form-group
-            +text-field-required('System', 'system', g.system, 'Enter system (required)')
-        .form-group.bmd-form-group
-            +text-field('Goal', 'goal', g.goal, 'Enter goal')
-        .form-group.bmd-form-group
-            +text-area('Comments','comments',g.comments,'Enter comments',3)
-        .form-group 
-            input(id='prio',  type='hidden', value=prio)

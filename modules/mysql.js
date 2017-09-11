@@ -57,5 +57,5 @@ module.exports = function(Config){
         });
     };
 
-	return obj;
+    return obj;
 };

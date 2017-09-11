@@ -4,7 +4,7 @@ module.exports = function(TokenDatabase, GameDatabases){
 	var router = express.Router();
 
 	router.post('/', isAuthenticated, async (req, res) => {
-		try{ 
+        try{ 
             let json = req.body;
             
             let user = req.user;
@@ -21,20 +21,23 @@ module.exports = function(TokenDatabase, GameDatabases){
             
             // Execute appropriate method
             var outcome = "";
-            if( method === 'delete'){
-                outcome = doDelete(res, user, payload, GameDatabases); 
-            } 
+            if( method === 'abandon'){
+                outcome = await doAbandon(res, user, payload, GameDatabases); 
+            }
+            else if( method === 'confirm') {
+                outcome = await doConfirm(res, user, payload, GameDatabases);
+            }
             else if( method === 'submit' ) {
-                outcome = doSubmit(res, user, payload, GameDatabases);
+                outcome = await doSubmit(res, user, payload, GameDatabases);
             } 
             else if( method === 'resubmit' ) {
-                outcome = doResubmit(res, user, payload, GameDatabases);
+                outcome = await doResubmit(res, user, payload, GameDatabases);
             }
             else {
                 throw new Error("Unsupported method " + method);
             }
             
-            console.log('--- Method ' + method + '  processed.'
+            console.log('--- Method ' + method + ' processed.'
                       + ' Outcome: ' + outcome
                       + ' User: ' + user.display_name);
         } catch (e) {
@@ -49,10 +52,10 @@ module.exports = function(TokenDatabase, GameDatabases){
 // If you delete a submission, the associated quest will only be deleted if it
 // has never been played yet. Have it been played at least one time, it becomes
 // abandoned instead
-async function doDelete(res, user, payload, GameDatabases){
-    let submission = GameDatabases.getSubmissionByUserID(user.user_id);
+async function doAbandon(res, user, payload, GameDatabases){
+    let submission = await GameDatabases.getSubmissionByUserID(user.user_id);
     
-    if( submission.active ){
+    if( submission.active && !submission.voted_out ){
         // Submission cannot be deleted
         //Send response
         errorResponse(res,
@@ -63,19 +66,19 @@ async function doDelete(res, user, payload, GameDatabases){
         return "fail - submission active";
     } 
     else {
-        let quest = GameDatabases.getQuestByID(submission.quest_id);
+        let quest = await GameDatabases.getQuestByID(submission.quest_id);
         
         // Delete submission
-        GameDatabases.deleteSubmission(submission);
+        await GameDatabases.deleteSubmission(submission);
         
         // Quests are not deleted if they've been played at least once
         // We might want to support re-opening un-completed quests in the future
         if( quest.times_played === 0 ){
-            GameDatabases.deleteQuest(quest);
+            await GameDatabases.deleteQuest(quest);
         } 
         else {
             quest.abandoned = true;
-            GameDatabases.updateQuest(quest);
+            await GameDatabases.updateQuest(quest);
         }
         
         successResponse(res, 
@@ -85,12 +88,36 @@ async function doDelete(res, user, payload, GameDatabases){
     }
 };
 
+async function doConfirm(res, user, payload, GameDatabases){
+    let submission = await GameDatabases.getSubmissionByUserID(user.user_id);
+    let quest = await GameDatabases.getQuestByID(submission.quest_id);
+    
+    if( !quest.completed && !submission.completed ){
+        // Confirmation cannot be processed
+        errorResponse(res,
+            'Confirmation failed',
+            'The quest is not flagged as completed. Thus, you cannot confirm'
+          + ' it\'s completion.');
+        return "fail - not completed";
+    } 
+    else {
+        
+        // Delete submission, so the user can make a new one
+        await GameDatabases.deleteSubmission(submission);
+        
+        successResponse(res, 
+            'Completion confirmed', 
+            'Your confirmation has been recorded. You can now make a new submission!');
+        return "success";
+    }
+}
+
 // You may only make a submission if you do not have a submission already. If 
 // you already have a submission, the new submission will be rejected
-function doSubmit(res, user, payload, GameDatabases){
-    let temp = GameDatabases.getSubmissionByUserID(user.user_id);
+async function doSubmit(res, user, payload, GameDatabases){
+    let temp = await GameDatabases.getSubmissionByUserID(user.user_id);
     
-    if( temp !== null ){
+    if( temp ){
         // If the user has a submission, something's wrong
         errorResponse(res,
             'Submission failed',
@@ -99,11 +126,11 @@ function doSubmit(res, user, payload, GameDatabases){
         return "fail - submission overwrite";
     }
     else if(payloadOkForSubmission(payload)){
-        let questID = GameDatabases.createQuest(payload.title, payload.system, payload.goal);
-        let submissionID = GameDatabases.createSubmission(questID, user.user_id, payload.comments);
+        let questID = await GameDatabases.createQuest(payload.title, payload.system, payload.goal);
+        let submissionID = await GameDatabases.createSubmission(questID, user.user_id, payload.comments);
         successResponse(res, 
             'Submission successful!', 
-            'Thank you for submitting to The Journey Project.\nMuch appreciated');
+            'Thank you for submitting to The Journey Project. Much appreciated');
         return "success";
     }
     else {
@@ -116,8 +143,8 @@ function doSubmit(res, user, payload, GameDatabases){
 
 // You may only resubmit a submissions that was voted out. If the submission
 // is in any other state, reject the resubmission
-function doResubmit(res, user, payload, GameDatabases){
-    let submission = GameDatabases.getSubmissionByUserID(user.user_id);
+async function doResubmit(res, user, payload, GameDatabases){
+    let submission = await GameDatabases.getSubmissionByUserID(user.user_id);
     if( submission.voted_out ){
         GameDatabases.deleteSubmission(submission);
         GameDatabases.createSubmission(submission.quest_id, user.user_id, submission.comments);
@@ -147,7 +174,7 @@ function isAuthenticated(req, res, next){
 }
 
 function errorResponse(res, error, message){
-	var title = error ? error.message : "";  
+	var title = error ? (error.message ? error.message  : error) : "";  
 	res.render('message', 
             {   title: title, 
                 status: 1001,
