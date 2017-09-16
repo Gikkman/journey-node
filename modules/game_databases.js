@@ -16,8 +16,8 @@ module.exports = function(MySQL){
         return data.insertId;
     };
     
-    obj.deleteQuest = async (quest) => {
-        var sql = "UPDATE " + QUESTS + " SET deleted = NOW() WHERE uid = ?";
+    obj.deleteQuestHard = async (quest) => {
+        var sql = "DELETE " + QUESTS + " WHERE uid = ?";
         return await MySQL.queryAsync(sql, [quest.quest_id]);
     };
     

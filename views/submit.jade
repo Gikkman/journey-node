@@ -26,15 +26,15 @@ block content
         p#message
             | Message here
         #form
-            if( !state )
+            if(!state)
                 +submit-new-quest()
-            else if( state === "Submitted")
+            else if(state === "Submitted")
                 +existing-quest(submission)
-            else if( state === "Voted out")
+            else if(state === "Voted out")
                 +resubmit-quest(submission)
-            else if( state === "Active")
+            else if(state === "Active")
                 +active-quest(submittion)
-            else if( state === "Completed" )
+            else if(state === "Completed")
                 +completed-quest(submission)
             else
                 | An error has occured. Please contact the Admin
@@ -49,20 +49,29 @@ mixin basic-game-form(game, state, disabled)
     - var d = (typeof disabled === 'undefined') ? true : disabled;
     fieldset.form-horizontal(disabled=d)
         .form-group.bmd-form-group
-            +text-field-required('Title', 'title', g.title, 'Enter title (required)')
+            +text-field-required('Title','title',g.title,'Enter title (required)')
         .form-group.bmd-form-group
-            +text-field-required('System', 'system', g.system, 'Enter system (required)')
+            +text-field-required('System','system',g.system,'Enter system (required)')
         .form-group.bmd-form-group
-            +text-field-required('Goal', 'goal', g.goal, 'Enter goal (required)')
+            +text-field-required('Goal','goal',g.goal,'Enter goal (required)')
         .form-group.bmd-form-group
             +text-area('Comments','comments',g.comments,'Enter comments',3)
         if(state)
-            .form-group.read-only.
+            .form-group
+                span.col-md-1.control-label
+                .col-md-6
+                    .form-group.row
+                        label.col-md-1.control-label(for='inputKey') Key
+                        .col-md-2
+                            input#inputKey.form-control(type='text', placeholder='Key')
+                        label.col-md-1.control-label(for='inputValue') Value
+                        .col-md-2
+                            input#inputValue.form-control(type='text', placeholder='Value')
         input(id='token', type='hidden', value=token)
 
             
 mixin submit-new-quest()
-    +basic-game-form( {}, false )
+    +basic-game-form({},false)
     .btn-box
         button.btn.btn-raised.btn-primary.spc-btn(type='button', onclick='submitQuest()') Submit
     

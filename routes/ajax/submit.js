@@ -55,7 +55,7 @@ module.exports = function(TokenDatabase, GameDatabases){
 async function doAbandon(res, user, payload, GameDatabases){
     let submission = await GameDatabases.getSubmissionByUserID(user.user_id);
     
-    if( submission.active && !submission.voted_out ){
+    if( submission.active ){
         // Submission cannot be deleted
         //Send response
         errorResponse(res,
@@ -68,17 +68,16 @@ async function doAbandon(res, user, payload, GameDatabases){
     else {
         let quest = await GameDatabases.getQuestByID(submission.quest_id);
         
-        // Delete submission
-        await GameDatabases.deleteSubmission(submission);
-        
         // Quests are not deleted if they've been played at least once
         // We might want to support re-opening un-completed quests in the future
         if( quest.times_played === 0 ){
-            await GameDatabases.deleteQuest(quest);
+            await GameDatabases.deleteQuestHard(quest);
+            await GameDatabases.deleteSubmissionHard(submission);
         } 
         else {
             quest.abandoned = true;
             await GameDatabases.updateQuest(quest);
+            await GameDatabases.deleteSubmission(submission);
         }
         
         successResponse(res, 
