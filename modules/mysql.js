@@ -56,6 +56,10 @@ module.exports = function(Config){
             });
         });
     };
+    
+    obj.getPool = function(){
+        return pool;
+    };
 
-    return obj;
+	return obj;
 };

@@ -7,17 +7,19 @@ block nav
 block content
     .col-md-12
         h1 Quests
-        p 
-            |"Quest" is the name we use to describe a submission to The Journey Project. Anyone can submit a quest, given that they fill out the quest form bellow. 
+        p
+            |"Quest" is the name we use to describe a submission to The Journey Project. Anyone can submit a quest, given that they fill out the quest form bellow.
             |In case this is your first time here, I would suggest heading over to our 
-            a(href="/tjp/faq") FaQ page 
-            |and check out the submission guidelines. 
+            a(href="/tjp/faq") FaQ page
+            |and check out the submission guidelines.
         h4 Reminders
-        lu   
-            li 
-                | Please keep in mind our system list, when making submissions. It is better to have checked the list beforehand,
+        lu
+            li
+                | Please keep in mind our 
+                a(href='https://docs.google.com/spreadsheets/d/1DjXXyCKW3KFll17OQoNuyTfY6rlpKAfMkUGYUV-bIKo/edit?usp=sharing') system list
+                | , when making submissions. It is better to have checked the list beforehand,
                 | and know how risky a certain submission is.
-            li 
+            li
                 | Submissions should not require any specific preparation on my side (such as reading a guide), or require that a certain viewer is present.
             li
                 | Some submissions will be less popular, and will probably get voted out quicker than others. That doesn't mean there is anything wrong in making them.
@@ -42,12 +44,12 @@ block content
         p#alert
             | Alert message here
     script(type='text/javascript' src='/js/journey_submit.js')
-    
+
 //- Mixin for different game forms
-mixin basic-game-form(game, state, disabled)
+mixin basic-game-form(game, disabled)
     - var g = (typeof game === 'undefined') ? {} : game;
-    - var d = (typeof disabled === 'undefined') ? true : disabled;
-    fieldset.form-horizontal(disabled=d)
+    - var dis = (typeof disabled === 'undefined') ? true : disabled;
+    fieldset.form-horizontal(disabled=dis)
         .form-group.bmd-form-group
             +text-field-required('Title','title',g.title,'Enter title (required)')
         .form-group.bmd-form-group
@@ -57,38 +59,35 @@ mixin basic-game-form(game, state, disabled)
         .form-group.bmd-form-group
             +text-area('Comments','comments',g.comments,'Enter comments',3)
         if(state)
-            .form-group
-                span.col-md-1.control-label
-                .col-md-6
-                    .form-group.row
-                        label.col-md-1.control-label(for='inputKey') Key
-                        .col-md-2
-                            input#inputKey.form-control(type='text', placeholder='Key')
-                        label.col-md-1.control-label(for='inputValue') Value
-                        .col-md-2
-                            input#inputValue.form-control(type='text', placeholder='Value')
+            .form-group.row
+                label.col-md-1.control-label(for='state') State
+                .col-md-2
+                    input#state.form-control(type='text', disabled, value=state)
+                label.col-md-2.control-label(for='time') Game Time
+                .col-md-2
+                    input#time.form-control(type='text', disabled, value='0:00:00')
         input(id='token', type='hidden', value=token)
 
-            
+
 mixin submit-new-quest()
-    +basic-game-form({},false)
+    +basic-game-form({}, false)
     .btn-box
         button.btn.btn-raised.btn-primary.spc-btn(type='button', onclick='submitQuest()') Submit
-    
+
 mixin existing-quest(game)
     +basic-game-form(game)
     .btn-box
         button.btn.btn-raised.btn-alert.spc-btn(type='button', onclick='abandonQuest()') Delete Submission
-    
+
 mixin active-quest(game)
     +basic-game-form(game)
-    
+
 mixin resubmit-quest(game)
     +basic-game-form(game)
     .btn-box
         button.btn.btn-raised.btn-primary.spc-btn(type='button', onclick='resubmit()') Resubmit
         button.btn.btn-raised.btn-alert.spc-btn(type='button', onclick='abandonQuest()') Delete Submission
-    
+
 mixin completed-quest(game)
     +basic-game-form(game)
     .btn-box

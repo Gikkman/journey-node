@@ -1,16 +1,17 @@
 var TwitchStrategy = require("passport-twitch").Strategy;
 
 var SELECT_USER_QUERY = 
-    "SELECT " + 
-        "u.user_id, u.last_seen, u.user_name, u.display_name, u.type, "+
-        "u.verified, uv.gold_current, uv.gold_lifetime, us.editor " +
-    "FROM users AS u " +
-    "LEFT JOIN user_variables AS uv ON u.user_id = uv.user_id " +
-    "LEFT JOIN user_statuses AS us ON u.user_id = us.user_id " +
-    "WHERE u.user_id = ? ";
+    "SELECT" 
+  + " u.user_id, u.last_seen, u.user_name, u.display_name, u.type,"
+  + " u.verified, uv.gold_current, uv.gold_lifetime, us.editor,"
+  + " u.access_token, u.refresh_token "
+  + " FROM users AS u"
+  + " LEFT JOIN user_variables AS uv ON u.user_id = uv.user_id"
+  + " LEFT JOIN user_statuses AS us ON u.user_id = us.user_id"
+  + " WHERE u.user_id = ?";
 
 // expose this function to our app using module.exports
-module.exports = function(Passport, MySQL, Config) {
+module.exports = function(Passport, MySQL, Config) {   
     Passport.serializeUser(function(user, done) {
         done(null, user.user_id);
     });
@@ -19,11 +20,10 @@ module.exports = function(Passport, MySQL, Config) {
         MySQL.query(SELECT_USER_QUERY, [user_id],             
         function(err, rows){
             let user = rows[0];
-            user.can_edit = user.editor | user.type === 'mod' | user.type === 'owner';
+            user.editor = user.editor | user.type === 'mod' | user.type === 'owner';
             done(err, user);
         });
     });
-
     // Twitch strategy for passport 
     Passport.use(new TwitchStrategy({
             clientID: Config.twitch_client_id,
@@ -39,16 +39,30 @@ module.exports = function(Passport, MySQL, Config) {
          *  profile.email
          */        
         function(accessToken, refreshToken, profile, done) {
-          findOrCreateTwitch(profile, done, MySQL);
+            profile.accessToken = accessToken;
+            profile.refreshToken = refreshToken;
+            findOrCreateTwitch(profile, done, MySQL);
         }
     ));
 };
 
 function findOrCreateTwitch(profile, done, MySQL){
-    var verified = profile.email ? 1 : 0;
-    MySQL.query('INSERT INTO users (created, last_seen, user_id, user_name, display_name, verified) VALUES(CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,?,?,?,?) ' +
-				'ON DUPLICATE KEY UPDATE last_seen=CURRENT_TIMESTAMP, verified=?, user_name=?, display_name=?', 
-                [profile.id, profile.username, profile.displayName, verified, verified, profile.username, profile.displayName],
+    let verified = profile.email ? 1 : 0;
+    let query = 'INSERT INTO users'
+                + ' (created, last_seen, user_id,'
+                + '  user_name, display_name, verified,'
+                + '  access_token, refresh_token)'
+              + ' VALUES(CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,?,?,?,?,?,?)'
+			  + ' ON DUPLICATE KEY UPDATE'
+                + ' last_seen=CURRENT_TIMESTAMP, verified=?,'
+                + ' user_name=?, display_name=?,'
+                + ' access_token=?, refresh_token=?';
+    
+    MySQL.query(query, 
+                [profile.id, profile.username, profile.displayName, verified, 
+                 profile.accessToken, profile.refreshToken, 
+                 verified, profile.username, profile.displayName, 
+                 profile.accessToken, profile.refreshToken],
                 (err, rows) => {
                     if(err) 
                         done(err);
