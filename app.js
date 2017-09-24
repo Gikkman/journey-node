@@ -66,6 +66,7 @@ require("./modules/passport")(passport, _mysql, _config);
 app.use(session({
     name: 'session',
     secure: true,
+    httpOnly: true,
     store: sessionStore,
     secret: _config.session_secret,
     resave: false,
@@ -78,7 +79,7 @@ app.use(passport.session());
 //=======================================================
 //==    Routing
 //=======================================================
-var _router = require('./routes/_router.js')(app, passport, _mysql, _config);
+var _router = require('./routes/_router.js')(app, passport, _mysql);
 
 //=======================================================
 //==    View enigine
@@ -103,9 +104,7 @@ process.on('exit', onExit);
 process.on('SIGTERM', process.exit);
 process.on('SIGINT', process.exit);
 function onUncaughtException(ex) {
-    let exception = JSON.parse(ex);
-
-    console.log(JSON.stringify(exception, null, 2));
+    console.log(ex);
     process.exit(1);
 }
 function onExit(code) {

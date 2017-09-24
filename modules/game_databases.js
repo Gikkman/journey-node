@@ -17,7 +17,7 @@ module.exports = function (MySQL) {
     };
 
     obj.deleteQuestHard = async (quest) => {
-        var sql = "DELETE " + QUESTS + " WHERE uid = ?";
+        var sql = "DELETE FROM " + QUESTS + " WHERE uid = ?";
         return await MySQL.queryAsync(sql, [quest.quest_id]);
     };
 
@@ -69,11 +69,11 @@ module.exports = function (MySQL) {
     obj.getSubmissionByUserID = async (userID) => {
         var sql = "SELECT s.uid AS submission_id, s.quest_id, s.user_id,"
             + " s.created, s.comments, s.voted_out,"
-            + " IF(a.uid IS NOT NULL, true, false) AS active,"
+            + " IF(a.state IS NOT NULL, a.state, NULL) AS state,"
             + " IF(a.sp IS NOT NULL, a.sp, 0) AS seconds_played"
             + " FROM " + SUBMISSONS + " AS s"
             + " LEFT JOIN"
-            + " (SELECT uid, submission_id, seconds_played AS sp FROM " + ACTIVE + ") AS a"
+            + " (SELECT submission_id, state, seconds_played AS sp FROM " + ACTIVE + ") AS a"
             + " ON a.submission_id = s.uid"
             + " WHERE s.user_id = ? AND s.deleted IS NULL";
         let rows = await MySQL.queryAsync(sql, [userID]);

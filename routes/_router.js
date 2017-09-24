@@ -1,9 +1,8 @@
 const JP_URL = '/tjp';
 
-module.exports = function (App, Passport, MySQL, Config) {
+module.exports = function (App, Passport, MySQL) {
 
     var TokenDatabase = require("../modules/token_database.js")(MySQL);
-    var SubmissionsDatabase = require("../modules/submissions_database.js")(MySQL);
     var FaqDatabase = require("../modules/faq_database.js")(MySQL);
     var RaffleDatabase = require("../modules/raffle_database.js")(MySQL);
     var UserDatabase = require("../modules/user_database.js")(MySQL);
@@ -12,7 +11,7 @@ module.exports = function (App, Passport, MySQL, Config) {
     // Twitch requires up to do some security lookup if you are logged in
     require("./_twitch_lookup.js")(App, UserDatabase, JP_URL + "/login");
 
-    var ajax = require('./ajax.js')(TokenDatabase, GameDatabases);
+    var api = require('./api.js')(MySQL);
     var auth = require('./auth.js')(Passport, JP_URL);
 
     var index = require('./index.js');
@@ -28,7 +27,7 @@ module.exports = function (App, Passport, MySQL, Config) {
 
     // general
     App.use('/auth', auth);
-    App.use('/ajax', ajax);
+    App.use('/api', api);
 
     // routes
     App.use(JP_URL, index);
