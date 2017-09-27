@@ -44,6 +44,7 @@ global.http = require("./modules/async_http.js")(https);
 var _config_mode = process.env.NODE_ENV === "production" ? 'prod' : 'dev';
 console.log('--- Server starting. Config mode: ' + _config_mode);
 var _config = require("./secret/config.json")[_config_mode];
+global._config = _config;
 
 //=======================================================
 //==    Database
@@ -51,15 +52,22 @@ var _config = require("./secret/config.json")[_config_mode];
 var _mysql = require("./modules/mysql.js")(_config);
 
 //=======================================================
+//==    Config from Database
+//=======================================================
+_mysql.query("SELECT `key`, `value` FROM `config`", [], (_err, results, fields) => {
+    if (_err)
+        throw "Could not read Config table: " + _err.code + " " + _err.message;
+
+    for (let i = 0; i < results.length; ++i) {
+        let item = results[i];
+        global._config[item.key] = item.value;
+    }
+});
+
+//=======================================================
 //==    Sessions
 //=======================================================
-var options = {
-    host: _config.mysql_host,
-    port: _config.mysql_port,
-    user: _config.mysql_user,
-    password: _config.mysql_password,
-    database: 'sessions'
-};
+var options = {};
 var sessionStore = new MySQLStore(options, _mysql.getPool());
 
 require("./modules/passport")(passport, _mysql, _config);

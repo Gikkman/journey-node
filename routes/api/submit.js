@@ -97,7 +97,7 @@ async function doConfirm(res, user, payload, GameDatabases) {
         let submission = await GameDatabases.getSubmissionByUserID(user.user_id);
         let quest = await GameDatabases.getQuestByID(submission.quest_id);
 
-        if (!quest.completed && !submission.completed) {
+        if (!quest.completed) {
             // Confirmation cannot be processed
             errorResponse(res,
                 'Confirmation failed',
@@ -123,8 +123,17 @@ async function doConfirm(res, user, payload, GameDatabases) {
 // you already have a submission, the new submission will be rejected
 async function doSubmit(res, user, payload, GameDatabases) {
     try {
-        let temp = await GameDatabases.getSubmissionByUserID(user.user_id);
+        let submissionsAllowed = GameDatabasessubmissionsAllowed();
+        if (!submissionsAllowed) {
+            // Submissions might be closed due to doing a raffle
+            errorResponse(res,
+                'Submission failed',
+                'Already have a submission. Please delete your current submission,'
+                + ' before making a new one.');
+            return "fail - submission overwrite";
+        }
 
+        let temp = await GameDatabases.getSubmissionByUserID(user.user_id);
         if (temp) {
             // If the user has a submission, something's wrong
             errorResponse(res,

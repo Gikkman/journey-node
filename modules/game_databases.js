@@ -48,6 +48,13 @@ module.exports = function (MySQL) {
     //              SUBMISSIONS
     //-----------------------------------------------------------
 
+    let submissionsAllowed = true;
+    obj.submissionsAllowed = (allow) => {
+        if (allow)
+            submissionsAllowed = allow;
+        return submissionsAllowed;
+    };
+
     obj.createSubmission = async (questID, userID, comments) => {
         var sql = "INSERT INTO " + SUBMISSONS
             + " (quest_id, user_id, comments, created)"
@@ -77,6 +84,24 @@ module.exports = function (MySQL) {
             + " ON a.submission_id = s.uid"
             + " WHERE s.user_id = ? AND s.deleted IS NULL";
         let rows = await MySQL.queryAsync(sql, [userID]);
+
+        if (rows.lenght > 1)
+            throw new Error("Illigal submission state. Too many submission: " + rows.lenght);
+        else
+            return rows[0];
+    };
+
+    obj.getSubmissionBySubmissionID = async (submissionID) => {
+        var sql = "SELECT s.uid AS submission_id, s.quest_id, s.user_id,"
+            + " s.created, s.comments, s.voted_out,"
+            + " IF(a.state IS NOT NULL, a.state, NULL) AS state,"
+            + " IF(a.sp IS NOT NULL, a.sp, 0) AS seconds_played"
+            + " FROM " + SUBMISSONS + " AS s"
+            + " LEFT JOIN"
+            + " (SELECT submission_id, state, seconds_played AS sp FROM " + ACTIVE + ") AS a"
+            + " ON a.submission_id = s.uid"
+            + " WHERE s.uid = ? AND s.deleted IS NULL";
+        let rows = await MySQL.queryAsync(sql, [submissionID]);
 
         if (rows.lenght > 1)
             throw new Error("Illigal submission state. Too many submission: " + rows.lenght);
