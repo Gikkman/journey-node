@@ -4,23 +4,32 @@ module.exports = function (Config, GameDatabases) {
 
     router.post('/progress', isAuthenticated, async (req, res) => {
         try {
-            await GameDatabases.advanceActives(); // TODO
-            res.send(200).send("OK");
+            let result = await GameDatabases.advanceActives();
+            res.status(200).send("OK");
         } catch (e) {
             res.status(500).send(e);
         }
     });
 
-    router.post('/next', isAuthenticated, async (req, res) => {
+    router.post('/setnext', isAuthenticated, async (req, res) => {
         try {
             let json = req.body;
             let nextSubmissionID = json.next;
             if (!nextSubmissionID)
                 throw "Body missing 'next'";
 
-            let nextSub = await GameDatabases.getSubmissionBySubmissionID(nextSubmissionID);
-            if (!nextSub)
-                throw "Submission does not exist";
+            let submission = await GameDatabases.getSubmissionBySubmissionID(nextSubmissionID);
+            if (!submission)
+                throw "Submission " + nextSubmissionID + " does not exist";
+
+            if(submission.active)
+                throw "Submission " + nextSubmissionID + " is already active";
+
+            let affected = await GameDatabases.setNextActive(submission);
+            if (affected === 0)
+                throw "The 'next' game for Journey is already assigned";
+
+            res.status(200).send("OK");
 
         } catch (e) {
             res.status(500).send(e);
@@ -31,8 +40,26 @@ module.exports = function (Config, GameDatabases) {
         try {
             let json = req.body;
             let allow = json.allow;
-            GameDatabases.submissionsAllowed(allow);
-            res.send(200).send("OK");
+            let status = GameDatabases.submissionsAllowed(allow);
+            res.status(200).send("OK. Is allowed: " + status);
+        } catch (e) {
+            res.status(500).send(e);
+        }
+    });
+
+    router.post('/update', isAuthenticated, async (req, res) => {
+        try {
+            let json = req.body;
+            let submission = json.submission;
+            let quest = json.quest;
+
+            if(submission)
+                var subCount = await GameDatabases.updateSubmission(submission);
+            if(quest)
+                var questCount = await GameDatabases.updateQuest(quest);
+
+            res.status(200).send("OK. Submission updated: " + subCount===1
+                               + " Quest updated: " + questCount===1);
         } catch (e) {
             res.status(500).send(e);
         }
@@ -44,9 +71,7 @@ module.exports = function (Config, GameDatabases) {
     //==    Internal
     //=======================================================
     async function isAuthenticated(req, res, next) {
-        let password = Config.api_key;
-        let json = req.body;
-        if (json.apikey === password) {
+        if (req.headers.apikey === Config.api_key) {
             next();
         } else {
             res.status(401).send("Unauthorized");

@@ -12,9 +12,25 @@ module.exports = function (TokenDatabase, GameDatabases) {
             let payload = json.payload;
             let token = json.token;
 
+            // Submissions might be closed due to doing a raffle
+            let submissionsAllowed = GameDatabases.submissionsAllowed();
+            if (!submissionsAllowed) {
+                console.log('--- Method ' + method + ' blocked.'
+                + ' Submissions closed.'
+                + ' User: ' + user.display_name);
+                errorResponse(res,
+                    'Submission closed',
+                    'A raffle is currently in progress. No submissions allowed' +
+                    ' until it is completed.');
+                return "fail - submission overwrite";
+            }
+
             // Validate submission token
             let tokenData = await TokenDatabase.validateToken(token, user.user_id);
             if (!tokenData.valid) {
+                console.log('--- Method ' + method + ' blocked.'
+                + ' Token invalid.'
+                + ' User: ' + user.display_name);
                 errorResponse(res, "Invalid session", "Submission session timed out");
                 return;
             }
@@ -123,16 +139,6 @@ async function doConfirm(res, user, payload, GameDatabases) {
 // you already have a submission, the new submission will be rejected
 async function doSubmit(res, user, payload, GameDatabases) {
     try {
-        let submissionsAllowed = GameDatabasessubmissionsAllowed();
-        if (!submissionsAllowed) {
-            // Submissions might be closed due to doing a raffle
-            errorResponse(res,
-                'Submission failed',
-                'Already have a submission. Please delete your current submission,'
-                + ' before making a new one.');
-            return "fail - submission overwrite";
-        }
-
         let temp = await GameDatabases.getSubmissionByUserID(user.user_id);
         if (temp) {
             // If the user has a submission, something's wrong

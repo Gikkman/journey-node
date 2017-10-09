@@ -1,13 +1,15 @@
 var express = require('express');
 module.exports = function (TokenDatabase, GameDatabases) {
     var router = express.Router();
-
+    var counter = 0;
     router.get('/', isAuthenticated, async (req, res) => {
         try {
             var user = req.user;
             var token = await TokenDatabase.createToken(user);
             var submission = await GameDatabases.getSubmissionByUserID(user.user_id);
             var state;
+
+            req.session.counter = counter++;
 
             if (submission) {
                 var quest = await GameDatabases.getQuestByID(submission.quest_id);
@@ -16,7 +18,7 @@ module.exports = function (TokenDatabase, GameDatabases) {
                     state = "Completed";
                 else if (submission.voted_out)
                     state = "Voted out";
-                else if (submission.state)
+                else if (submission.active)
                     state = "Active";
                 else if (quest.submitted)
                     state = "Submitted";
@@ -27,6 +29,13 @@ module.exports = function (TokenDatabase, GameDatabases) {
                 submission.system = quest.system;
                 submission.goal = quest.goal;
                 submission.time = toHhmmss(submission.seconds_played + quest.seconds_played);
+
+                // States are in lower case. This will upper case the leading char
+                if(submission.state){
+                    let temp = submission.state;
+                    temp = temp.charAt(0).toUpperCase() + temp.slice(1);
+                    submission.state = temp;
+                }
             }
 
             res.render('submit', {token: token, submission: submission, state: state});

@@ -15,5 +15,9 @@ module.exports = function (MySQL) {
     router.use('/submit', submit);
     router.use('/journey', journey);
 
+    router.get('/', (req, res) => {
+       res.status(200).send("Hello");
+    });
+
     return router;
 };
