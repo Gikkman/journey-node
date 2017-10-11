@@ -53,7 +53,7 @@ mixin basic-game-form(submission, disabled)
     - var g = (typeof submission == 'undefined') ? {} : submission;
     - var d = (typeof disabled == 'undefined') ? true : disabled;
      //- If submission state is Active, then we want to output 'Next Game' or 'Current Game'
-    - var s = (state === 'Active') ? g.state + " Game" : state;
+    - var s = (state === 'Active') ? g.active_state + " Game" : g.state;
     fieldset.form-horizontal(disabled=d)
         .form-group.bmd-form-group
             +text-field-required('Title','QuestTitle',g.title,'Enter title (required)')

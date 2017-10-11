@@ -14,28 +14,24 @@ module.exports = function (TokenDatabase, GameDatabases) {
             if (submission) {
                 var quest = await GameDatabases.getQuestByID(submission.quest_id);
 
-                if (quest.completed)
-                    state = "Completed";
-                else if (submission.voted_out)
-                    state = "Voted out";
-                else if (submission.active)
-                    state = "Active";
-                else if (quest.submitted)
-                    state = "Submitted";
-                else
-                    state = "Error";
-
                 submission.title = quest.title;
                 submission.system = quest.system;
                 submission.goal = quest.goal;
                 submission.time = toHhmmss(submission.seconds_played + quest.seconds_played);
 
                 // States are in lower case. This will upper case the leading char
-                if(submission.state){
-                    let temp = submission.state;
+                let temp = submission.state;
+                temp = temp.charAt(0).toUpperCase() + temp.slice(1);
+                submission.state = temp;
+
+                if(submission.active_state){
+                    let temp = submission.active_state;
                     temp = temp.charAt(0).toUpperCase() + temp.slice(1);
-                    submission.state = temp;
+                    submission.active_state = temp;
                 }
+
+                // For the view
+                state = submission.state;
             }
 
             res.render('submit', {token: token, submission: submission, state: state});

@@ -1,4 +1,5 @@
 var express = require('express');
+const State = global._state;
 
 module.exports = function (TokenDatabase, GameDatabases) {
     var router = express.Router();
@@ -22,7 +23,7 @@ module.exports = function (TokenDatabase, GameDatabases) {
                     'Submission closed',
                     'A raffle is currently in progress. No submissions allowed' +
                     ' until it is completed.');
-                return "fail - submission overwrite";
+                return;
             }
 
             // Validate submission token
@@ -62,8 +63,8 @@ module.exports = function (TokenDatabase, GameDatabases) {
     return router;
 };
 
-// You may only delete a submission IF the game is not labeled as
-// NEXT GAME or CURRENT GAME.
+// You may only delete a submission IF the game is not active.
+//
 // If you delete a submission, the associated quest will only be deleted if it
 // has never been played yet. Have it been played at least one time, it becomes
 // abandoned instead
@@ -71,9 +72,8 @@ async function doAbandon(res, user, payload, GameDatabases) {
     try {
         let submission = await GameDatabases.getSubmissionByUserID(user.user_id);
 
-        if (submission.active) {
-            // Submission cannot be deleted
-            //Send response
+        // Active submissions cannot be deleted
+        if (submission.state === State.active) {
             errorResponse(res,
                 'Submission deletion failed',
                 'Your submission has not been deleted. This probably occures due to the submission winning'
@@ -87,13 +87,13 @@ async function doAbandon(res, user, payload, GameDatabases) {
             // We might want to support re-opening un-completed quests in the future
             let outcome;
             if (quest.times_played === 0) {
-                await GameDatabases.deleteQuestHard(quest);
-                await GameDatabases.deleteSubmissionHard(submission);
+                GameDatabases.deleteQuestHard(quest);
+                GameDatabases.deleteSubmissionHard(submission);
                 outcome = "success (hard)";
             } else {
-                quest.abandoned = true;
-                await GameDatabases.updateQuest(quest);
-                await GameDatabases.deleteSubmission(submission);
+                quest.state = State.abandoned;
+                GameDatabases.updateQuest(quest);
+                GameDatabases.deleteSubmission(submission);
                 outcome = "success";
             }
 
@@ -111,10 +111,9 @@ async function doAbandon(res, user, payload, GameDatabases) {
 async function doConfirm(res, user, payload, GameDatabases) {
     try {
         let submission = await GameDatabases.getSubmissionByUserID(user.user_id);
-        let quest = await GameDatabases.getQuestByID(submission.quest_id);
 
-        if (!quest.completed) {
-            // Confirmation cannot be processed
+        // Can only confirm a completed submission
+        if (submission.state !== State.completed) {
             errorResponse(res,
                 'Confirmation failed',
                 'The quest is not flagged as completed. Thus, you cannot confirm'
@@ -123,8 +122,7 @@ async function doConfirm(res, user, payload, GameDatabases) {
         } else {
 
             // Delete submission, so the user can make a new one
-            await GameDatabases.deleteSubmission(submission);
-
+            GameDatabases.deleteSubmission(submission);
             successResponse(res,
                 'Completion confirmed',
                 'Your confirmation has been recorded. You can now make a new submission!');
@@ -149,7 +147,7 @@ async function doSubmit(res, user, payload, GameDatabases) {
             return "fail - submission overwrite";
         } else if (payloadOkForSubmission(payload)) {
             let questID = await GameDatabases.createQuest(payload.title, payload.system, payload.goal);
-            let submissionID = await GameDatabases.createSubmission(questID, user.user_id, payload.comments);
+            GameDatabases.createSubmission(questID, user.user_id, payload.comments);
             successResponse(res,
                 'Submission successful!',
                 'Thank you for submitting to The Journey Project. Much appreciated');
@@ -171,27 +169,35 @@ async function doSubmit(res, user, payload, GameDatabases) {
 async function doResubmit(res, user, payload, GameDatabases) {
     try {
         let submission = await GameDatabases.getSubmissionByUserID(user.user_id);
-        if (submission.voted_out) {
-            await GameDatabases.deleteSubmission(submission);
-            await GameDatabases.createSubmission(submission.quest_id, user.user_id, submission.comments);
 
-            let quest = await GameDatabases.getQuestByID(submission.quest_id);
-            successResponse(res,
-                'Resubmission successful!',
-                'Thank you for resubmitting ' + quest.title + ' [' + quest.system + ']'
-                + ' to The Journey Project.\nMuch appreciated');
-            return "success";
-        } else {
+        // You may only resubmit a game that is voted out
+        if (submission.state !== State.voted_out) {
             errorResponse(res,
                 'Resubmission failed',
                 'You currently do not have a submission that is resubmittable');
             return "fail - submission state";
         }
+
+        GameDatabases.deleteSubmission(submission);
+        GameDatabases.createSubmission(submission.quest_id, user.user_id, submission.comments);
+
+        let quest = await GameDatabases.getQuestByID(submission.quest_id);
+        quest.state = State.submitted;
+        GameDatabases.updateQuest(quest);
+
+        successResponse(res,
+            'Resubmission successful!',
+            'Thank you for resubmitting ' + quest.title + ' [' + quest.system + ']'
+            + ' to The Journey Project.\nMuch appreciated');
+        return "success";
     } catch (e) {
         return e;
     }
 }
 
+//------------------------------------------------------------------------------
+//              Helper Methods
+//------------------------------------------------------------------------------
 function payloadOkForSubmission(payload) {
     return payload.title && payload.system && payload.goal;
 }

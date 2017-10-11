@@ -46,6 +46,9 @@ console.log('--- Server starting. Config mode: ' + _config_mode);
 var _config = require("./secret/config.json")[_config_mode];
 global._config = _config;
 
+var state = require("./modules/state.js")();
+global._state = state;
+
 //=======================================================
 //==    Database
 //=======================================================
