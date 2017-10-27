@@ -8,13 +8,14 @@ module.exports = function (Config, GameDatabases) {
         try {
             let json = req.body;
             let outcome = json.outcome;
-            if(outcome !== State.completed && outcome !== State.voted_out){
+            if(outcome !== State.S.completed && outcome !== State.S.voted_out){
                 throw "Invalid 'outcome' parameter";
             }
 
             let submission = await GameDatabases.getCurrentActive();
             if(submission){
                 submission.state = outcome;
+                submission.end_date = new Date();
                 GameDatabases.updateSubmission(submission);
 
                 let quest = await GameDatabases.getQuestByID(submission.quest_id);
@@ -43,19 +44,19 @@ module.exports = function (Config, GameDatabases) {
             if (!submission)
                 throw "Submission " + nextSubmissionID + " does not exist";
 
-            if(submission.state === State.active)
+            if(submission.state === State.S.active)
                 throw "Submission " + nextSubmissionID + " is already active";
 
             let affected = await GameDatabases.setNextActive(submission);
             if (affected === 0)
                 throw "The 'next' game for Journey is already assigned";
 
-            submission.state = State.active;
+            submission.state = State.S.active;
             GameDatabases.updateSubmission(submission);
 
             let quest = {
                 quest_id: submission.quest_id,
-                state: State.active
+                state: State.Q.active
             };
             GameDatabases.updateQuest(quest);
 

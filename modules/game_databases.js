@@ -16,7 +16,7 @@ module.exports = function (MySQL) {
         var sql = "INSERT INTO " + QUESTS
             + " (title, system, goal, created, updated, state)"
             + " VALUES (?,?,?,NOW(), NOW(), ?)";
-        var data = await MySQL.queryAsync(sql, [title, system, goal, State.submitted]);
+        var data = await MySQL.queryAsync(sql, [title, system, goal, State.Q.submitted]);
         return data.insertId;
     };
 
@@ -70,7 +70,7 @@ module.exports = function (MySQL) {
         var sql = "INSERT INTO " + SUBMISSONS
             + " (quest_id, user_id, comments, created, updated, state)"
             + " VALUES (?,?,?, NOW(), NOW(), ?)";
-        let data = await MySQL.queryAsync(sql, [questID, userID, comments, State.submitted]);
+        let data = await MySQL.queryAsync(sql, [questID, userID, comments, State.S.submitted]);
         return data.insertId;
     };
 
@@ -84,7 +84,7 @@ module.exports = function (MySQL) {
         return await MySQL.queryAsync(sql, [submission.submission_id]);
     };
 
-    const updateModifiableFields = ['comments', 'state', 'start_date', 'seconds_played'];
+    const updateModifiableFields = ['comments', 'state', 'start_date', 'end_date', 'seconds_played'];
     obj.updateSubmission = async (submission) => {
         if(!submission.submission_id){
             return 'Missing submission ID';
@@ -152,15 +152,15 @@ module.exports = function (MySQL) {
             + " WHERE system = " + JOURNEY + " AND state = ?";
         var sqlUpdate = "UPDATE " + ACTIVE + " SET "
             + " state = ? WHERE system = " + JOURNEY;
-        let deleteRow = await MySQL.queryAsync(sqlDelete, [State.current]);
-        let updateRow = await MySQL.queryAsync(sqlUpdate, [State.current]);
+        let deleteRow = await MySQL.queryAsync(sqlDelete, [State.A.current]);
+        let updateRow = await MySQL.queryAsync(sqlUpdate, [State.A.current]);
         return { deleted: deleteRow.affectedRows, updated: updateRow.affectedRows};
     };
 
     obj.setNextActive = async (submission) => {
         var sql = "INSERT IGNORE INTO " + ACTIVE + " (submission_id, system, state) "
             + " VALUES (?," + JOURNEY + ",?)";
-        let row = await MySQL.queryAsync(sql, [submission.submission_id, State.next]);
+        let row = await MySQL.queryAsync(sql, [submission.submission_id, State.A.next]);
         return row.affectedRows;
     };
 
@@ -171,7 +171,7 @@ module.exports = function (MySQL) {
                     + " LEFT JOIN game_submission AS s"
                     + " ON s.uid = a.submission_id"
                 + " WHERE a.system = " + JOURNEY + " AND a.state = ?";
-        let rows = MySQL.queryAsync(sql, [State.next]);
+        let rows = MySQL.queryAsync(sql, [State.A.next]);
         return rows[0];
     };
 
@@ -182,7 +182,7 @@ module.exports = function (MySQL) {
                     + " LEFT JOIN game_submission AS s"
                     + " ON s.uid = a.submission_id"
                 + " WHERE a.system = " + JOURNEY + " AND a.state = ?";
-        let rows = await MySQL.queryAsync(sql, [State.current]);
+        let rows = await MySQL.queryAsync(sql, [State.A.current]);
         return rows[0];
     };
 

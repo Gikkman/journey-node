@@ -1,15 +1,12 @@
 var express = require('express');
 module.exports = function (TokenDatabase, GameDatabases) {
     var router = express.Router();
-    var counter = 0;
     router.get('/', isAuthenticated, async (req, res) => {
         try {
             var user = req.user;
             var token = await TokenDatabase.createToken(user);
             var submission = await GameDatabases.getSubmissionByUserID(user.user_id);
             var state;
-
-            req.session.counter = counter++;
 
             if (submission) {
                 var quest = await GameDatabases.getQuestByID(submission.quest_id);

@@ -73,7 +73,7 @@ async function doAbandon(res, user, payload, GameDatabases) {
         let submission = await GameDatabases.getSubmissionByUserID(user.user_id);
 
         // Active submissions cannot be deleted
-        if (submission.state === State.active) {
+        if (submission.state === State.S.active) {
             errorResponse(res,
                 'Submission deletion failed',
                 'Your submission has not been deleted. This probably occures due to the submission winning'
@@ -91,7 +91,7 @@ async function doAbandon(res, user, payload, GameDatabases) {
                 GameDatabases.deleteSubmissionHard(submission);
                 outcome = "success (hard)";
             } else {
-                quest.state = State.abandoned;
+                quest.state = State.Q.abandoned;
                 GameDatabases.updateQuest(quest);
                 GameDatabases.deleteSubmission(submission);
                 outcome = "success";
@@ -113,7 +113,7 @@ async function doConfirm(res, user, payload, GameDatabases) {
         let submission = await GameDatabases.getSubmissionByUserID(user.user_id);
 
         // Can only confirm a completed submission
-        if (submission.state !== State.completed) {
+        if (submission.state !== State.S.completed) {
             errorResponse(res,
                 'Confirmation failed',
                 'The quest is not flagged as completed. Thus, you cannot confirm'
@@ -171,7 +171,7 @@ async function doResubmit(res, user, payload, GameDatabases) {
         let submission = await GameDatabases.getSubmissionByUserID(user.user_id);
 
         // You may only resubmit a game that is voted out
-        if (submission.state !== State.voted_out) {
+        if (submission.state !== State.S.voted_out) {
             errorResponse(res,
                 'Resubmission failed',
                 'You currently do not have a submission that is resubmittable');
@@ -182,7 +182,7 @@ async function doResubmit(res, user, payload, GameDatabases) {
         GameDatabases.createSubmission(submission.quest_id, user.user_id, submission.comments);
 
         let quest = await GameDatabases.getQuestByID(submission.quest_id);
-        quest.state = State.submitted;
+        quest.state = State.Q.submitted;
         GameDatabases.updateQuest(quest);
 
         successResponse(res,
