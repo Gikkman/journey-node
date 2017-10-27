@@ -4,8 +4,27 @@ block nav
     +nav_bar()
 
 block content
+    iframe.visible-lg.visible-md#desktop(style="width:100%;" frameBorder="0")
+    iframe.hidden-lg.hidden-md#mobile(style="width:100%;" frameBorder="0")
+    
     script.
-        var width = document.getElementById("video").offsetWidth / 0.8;
-        var height = width/4*3;
-    #video
-        iframe(src='https://www.youtube.com/embed/DLzxrzFCyOs?controls=0&autoplay=1&start=43', width=width, height=height, frameborder='0', allowfullscreen='0')
+        window.onload = () => {
+            var isMobile = window.matchMedia("only screen and (max-width: 992px)");
+            isMobile = isMobile.matches;
+            
+            var iframeD = document.getElementById('desktop');
+            var iframeM = document.getElementById('mobile');
+            
+            var iframe = isMobile ? iframeM : iframeD; 
+                        
+            var w = iframe.clientWidth * 0.6;
+            
+            var html = isMobile
+                    ?   'https://www.youtube.com/embed/0mXoMK4PvIw?'
+                        + 'rel=0&amp;controls=0&amp;showinfo=0'
+                    :   'https://www.youtube.com/embed/DLzxrzFCyOs?'
+                        + 'rel=0&amp;showinfo=0&amp;controls=0&amp;autoplay=1&amp;start=43';
+            iframe.src = html;
+            iframe.width = w;
+            iframe.height = w;  
+        };
