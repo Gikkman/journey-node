@@ -31,5 +31,5 @@ module.exports = function(App, Passport, MySQL, Config){
     App.use(JP_URL + '/faq',  faq);
     App.use(JP_URL + '/raffle', raffle);
 	
-	
+	App.use(JP_URL + '/rick', (req, res) => res.render('rick'));
 };

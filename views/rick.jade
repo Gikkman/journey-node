@@ -1,0 +1,11 @@
+extends layout
+
+block nav
+    +nav_bar()
+
+block content
+    script.
+        var width = document.getElementById("video").offsetWidth / 0.8;
+        var height = width/4*3;
+    #video
+        iframe(src='https://www.youtube.com/embed/DLzxrzFCyOs?controls=0&autoplay=1&start=43', width=width, height=height, frameborder='0', allowfullscreen='0')
