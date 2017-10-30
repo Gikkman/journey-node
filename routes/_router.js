@@ -37,5 +37,6 @@ module.exports = function(App, Passport, MySQL, Config){
 
     App.use(JP_URL + '/gold', (req, res) => res.render('unwary'));
     App.use(JP_URL + '/buy', (req, res) => res.render('unwary'));
+    App.use(JP_URL + '/store', (req, res) => res.render('unwary'));
 
 };
