@@ -49,3 +49,19 @@ CREATE TABLE `game_active` (
   PRIMARY KEY (`uid`),
   UNIQUE KEY `game_active_unique` (`system`,`state`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `game_injected` (
+  `uid` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(100) NOT NULL,
+  `system` varchar(50) NOT NULL,
+  `goal` varchar(100) NOT NULL,
+  `comments` text NOT NULL,
+  `created` datetime NOT NULL,
+  `updated` datetime NOT NULL,
+  `deleted` datetime DEFAULT NULL,
+  `start_date` date DEFAULT NULL,
+  `end_date` date DEFAULT NULL,
+  `seconds_played` int(10) unsigned NOT NULL DEFAULT '0',
+  `times_played` int(10) unsigned NOT NULL DEFAULT '1',
+  PRIMARY KEY (`uid`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
