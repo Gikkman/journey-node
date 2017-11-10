@@ -15,7 +15,7 @@ module.exports = function (App, Passport, MySQL) {
     var auth = require('./auth.js')(Passport, JP_URL);
 
     var index = require('./index.js');
-    var submit = require('./submit.js')(TokenDatabase, GameDatabases);
+    var submit = require('./submit.js')(MySQL, TokenDatabase, GameDatabases);
     var login = require('./login.js');
     var faq = require('./faq.js')(FaqDatabase, MySQL);
     var raffle = require('./raffle.js')(RaffleDatabase);

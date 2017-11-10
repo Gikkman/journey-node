@@ -1,7 +1,7 @@
 var express = require('express');
 const State = global._state;
 
-module.exports = function (TokenDatabase, GameDatabases) {
+module.exports = function (MySQL, TokenDatabase, GameDatabases) {
     var router = express.Router();
 
     router.post('/', isAuthenticated, async (req, res) => {
@@ -38,14 +38,15 @@ module.exports = function (TokenDatabase, GameDatabases) {
 
             // Execute appropriate method
             var outcome = "";
+            let Transaction = await MySQL.transaction();
             if (method === 'abandon') {
-                outcome = await doAbandon(res, user, payload, GameDatabases);
+                outcome = await doAbandon(res, user, payload, GameDatabases, Transaction);
             } else if (method === 'confirm') {
-                outcome = await doConfirm(res, user, payload, GameDatabases);
+                outcome = await doConfirm(res, user, payload, GameDatabases, Transaction);
             } else if (method === 'submit') {
-                outcome = await doSubmit(res, user, payload, GameDatabases);
+                outcome = await doSubmit(res, user, payload, GameDatabases, Transaction);
             } else if (method === 'resubmit') {
-                outcome = await doResubmit(res, user, payload, GameDatabases);
+                outcome = await doResubmit(res, user, payload, GameDatabases, Transaction);
             } else {
                 throw new Error("Unsupported method " + method);
             }
@@ -54,8 +55,12 @@ module.exports = function (TokenDatabase, GameDatabases) {
                 + ' Outcome: ' + outcome
                 + ' User: ' + user.display_name);
 
-            if (outcome instanceof Error)
+            if (outcome instanceof Error){
+                await Transaction.rollbackAsync();
                 throw outcome;
+            } else {
+                await Transaction.commitAsync();
+            }
         } catch (e) {
             errorResponse(res, e, "Unexpected error when making a submission");
         }
@@ -68,9 +73,9 @@ module.exports = function (TokenDatabase, GameDatabases) {
 // If you delete a submission, the associated quest will only be deleted if it
 // has never been played yet. Have it been played at least one time, it becomes
 // abandoned instead
-async function doAbandon(res, user, payload, GameDatabases) {
+async function doAbandon(res, user, payload, GameDatabases, Trans) {
     try {
-        let submission = await GameDatabases.getSubmissionByUserID(user.user_id);
+        let submission = await GameDatabases.getSubmissionByUserID(Trans, user.user_id);
 
         // Active submissions cannot be deleted
         if (submission.state === State.S.active) {
@@ -81,19 +86,19 @@ async function doAbandon(res, user, payload, GameDatabases) {
                 + ' try to delete ít.');
             return "fail - submission active";
         } else {
-            let quest = await GameDatabases.getQuestByID(submission.quest_id);
+            let quest = await GameDatabases.getQuestByID(Trans, submission.quest_id);
 
             // Quests are not deleted if they've been played at least once
             // We might want to support re-opening un-completed quests in the future
             let outcome;
             if (quest.times_played === 0) {
-                GameDatabases.deleteQuestHard(quest);
-                GameDatabases.deleteSubmissionHard(submission);
+                GameDatabases.deleteQuestHard(Trans, quest);
+                GameDatabases.deleteSubmissionHard(Trans, submission);
                 outcome = "success (hard)";
             } else {
                 quest.state = State.Q.abandoned;
-                GameDatabases.updateQuest(quest);
-                GameDatabases.deleteSubmission(submission);
+                GameDatabases.updateQuest(Trans, quest);
+                GameDatabases.deleteSubmission(Trans, submission);
                 outcome = "success";
             }
 
@@ -108,9 +113,9 @@ async function doAbandon(res, user, payload, GameDatabases) {
 }
 ;
 
-async function doConfirm(res, user, payload, GameDatabases) {
+async function doConfirm(res, user, payload, GameDatabases, Trans) {
     try {
-        let submission = await GameDatabases.getSubmissionByUserID(user.user_id);
+        let submission = await GameDatabases.getSubmissionByUserID(Trans, user.user_id);
 
         // Can only confirm a completed submission
         if (submission.state !== State.S.completed) {
@@ -122,7 +127,7 @@ async function doConfirm(res, user, payload, GameDatabases) {
         } else {
 
             // Delete submission, so the user can make a new one
-            GameDatabases.deleteSubmission(submission);
+            GameDatabases.deleteSubmission(Trans, submission);
             successResponse(res,
                 'Completion confirmed',
                 'Your confirmation has been recorded. You can now make a new submission!');
@@ -135,9 +140,9 @@ async function doConfirm(res, user, payload, GameDatabases) {
 
 // You may only make a submission if you do not have a submission already. If
 // you already have a submission, the new submission will be rejected
-async function doSubmit(res, user, payload, GameDatabases) {
+async function doSubmit(res, user, payload, GameDatabases, Trans) {
     try {
-        let temp = await GameDatabases.getSubmissionByUserID(user.user_id);
+        let temp = await GameDatabases.getSubmissionByUserID(Trans, user.user_id);
         if (temp) {
             // If the user has a submission, something's wrong
             errorResponse(res,
@@ -146,8 +151,8 @@ async function doSubmit(res, user, payload, GameDatabases) {
                 + ' before making a new one.');
             return "fail - submission overwrite";
         } else if (payloadOkForSubmission(payload)) {
-            let questID = await GameDatabases.createQuest(payload.title, payload.system, payload.goal);
-            GameDatabases.createSubmission(questID, user.user_id, payload.comments);
+            let questID = await GameDatabases.createQuest(Trans, payload.title, payload.system, payload.goal);
+            GameDatabases.createSubmission(Trans, questID, user.user_id, payload.comments);
             successResponse(res,
                 'Submission successful!',
                 'Thank you for submitting to The Journey Project. Much appreciated');
@@ -166,9 +171,9 @@ async function doSubmit(res, user, payload, GameDatabases) {
 
 // You may only resubmit a submissions that was voted out. If the submission
 // is in any other state, reject the resubmission
-async function doResubmit(res, user, payload, GameDatabases) {
+async function doResubmit(res, user, payload, GameDatabases, Trans) {
     try {
-        let submission = await GameDatabases.getSubmissionByUserID(user.user_id);
+        let submission = await GameDatabases.getSubmissionByUserID(Trans, user.user_id);
 
         // You may only resubmit a game that is voted out
         if (submission.state !== State.S.voted_out) {
@@ -178,12 +183,12 @@ async function doResubmit(res, user, payload, GameDatabases) {
             return "fail - submission state";
         }
 
-        GameDatabases.deleteSubmission(submission);
-        GameDatabases.createSubmission(submission.quest_id, user.user_id, submission.comments);
+        GameDatabases.deleteSubmission(Trans, submission);
+        GameDatabases.createSubmission(Trans, submission.quest_id, user.user_id, submission.comments);
 
-        let quest = await GameDatabases.getQuestByID(submission.quest_id);
+        let quest = await GameDatabases.getQuestByID(Trans, submission.quest_id);
         quest.state = State.Q.submitted;
-        GameDatabases.updateQuest(quest);
+        GameDatabases.updateQuest(Trans, quest);
 
         successResponse(res,
             'Resubmission successful!',

@@ -23,8 +23,8 @@ app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(helmet());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
-app.use(logger('dev'));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(logger('dev'));
 
 markdown.setOptions({
     breaks: true
@@ -53,6 +53,7 @@ global._state = state;
 //==    Database
 //=======================================================
 var _mysql = require("./modules/mysql.js")(_config);
+global._mysql = _mysql;
 
 //=======================================================
 //==    Config from Database

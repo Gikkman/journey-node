@@ -1,15 +1,15 @@
 var express = require('express');
-module.exports = function (TokenDatabase, GameDatabases) {
+module.exports = function (MySQL, TokenDatabase, GameDatabases) {
     var router = express.Router();
     router.get('/', isAuthenticated, async (req, res) => {
         try {
             var user = req.user;
             var token = await TokenDatabase.createToken(user);
-            var submission = await GameDatabases.getSubmissionByUserID(user.user_id);
+            var submission = await GameDatabases.getSubmissionByUserID(MySQL, user.user_id);
             var state;
 
             if (submission) {
-                var quest = await GameDatabases.getQuestByID(submission.quest_id);
+                var quest = await GameDatabases.getQuestByID(MySQL, submission.quest_id);
 
                 submission.title = quest.title;
                 submission.system = quest.system;

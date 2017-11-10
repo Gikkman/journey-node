@@ -65,3 +65,16 @@ CREATE TABLE `game_injected` (
   `times_played` int(10) unsigned NOT NULL DEFAULT '1',
   PRIMARY KEY (`uid`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE `journey`.`gamesplayed`
+ADD COLUMN `seconds_quest` INT(16) UNSIGNED NOT NULL AFTER `seconds_played`,
+ADD COLUMN `seconds_total` INT(16) UNSIGNED NOT NULL AFTER `seconds_total`;
+
+DELIMITER $$
+
+DROP TRIGGER IF EXISTS journey.gamesplayed_AFTER_INSERT
+CREATE TRIGGER `journey`.`gamesplayed_BEFORE_INSERT` BEFORE INSERT ON `gamesplayed` FOR EACH ROW
+BEGIN
+	SET NEW.`seconds_total` = (SELECT SUM(`seconds_played`) FROM gamesplayed) + NEW.`seconds_played`;
+END$$
+DELIMITER ;
