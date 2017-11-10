@@ -35,4 +35,12 @@ module.exports = function (App, Passport, MySQL) {
     App.use(JP_URL + '/login', login);
     App.use(JP_URL + '/faq', faq);
     App.use(JP_URL + '/raffle', raffle);
+
+    // troll routes
+	App.use(JP_URL + '/complaints', (req, res) => res.render('rick'));
+	App.use(JP_URL + '/rigged', (req, res) => res.render('rick'));
+
+    App.use(JP_URL + '/gold', (req, res) => res.render('unwary'));
+    App.use(JP_URL + '/buy', (req, res) => res.render('unwary'));
+    App.use(JP_URL + '/store', (req, res) => res.render('unwary'));
 };
