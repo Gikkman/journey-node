@@ -8,9 +8,10 @@ module.exports = function(Config){
 		port	 : Config.mysql_port,
 		user     : Config.mysql_user,
 		password : Config.mysql_password,
-		database : Config.mysql_schema
+		database : Config.mysql_schema,
+        timezone: 'utc'
 	});
-	
+
 	obj.query = function(query, args, callback){
 		//Establish connection
 		pool.getConnection(function(err, conn) {
@@ -21,10 +22,10 @@ module.exports = function(Config){
 				//Fire query
 				conn.query(query, args, function(_err, results, fields){
 					callback(_err, results);
-					
+
 					//Release connection
 					conn.release();
-				});	
+				});
 			}
 		});
 	};
@@ -56,7 +57,7 @@ module.exports = function(Config){
             });
         });
     };
-    
+
     obj.getPool = function(){
         return pool;
     };

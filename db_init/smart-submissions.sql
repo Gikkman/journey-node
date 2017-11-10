@@ -20,7 +20,7 @@ CREATE TABLE `game_quest` (
   `seconds_played` int(10) unsigned NOT NULL DEFAULT '0',
   `times_played` int(10) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`uid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `game_submission` (
   `uid` int(11) NOT NULL AUTO_INCREMENT,
@@ -39,7 +39,7 @@ CREATE TABLE `game_submission` (
   KEY `fk_gs_user_id_idx` (`user_id`),
   CONSTRAINT `fk_gs_quest_id` FOREIGN KEY (`quest_id`) REFERENCES `game_quest` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_gs_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `game_active` (
   `uid` int(10) unsigned NOT NULL AUTO_INCREMENT,

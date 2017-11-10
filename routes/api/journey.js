@@ -8,23 +8,40 @@ module.exports = function (Config, GameDatabases) {
         try {
             let json = req.body;
             let outcome = json.outcome;
+            let resubmit = json.resubmit;
             if(outcome !== State.S.completed && outcome !== State.S.voted_out){
                 throw "Invalid 'outcome' parameter";
             }
 
+            // Update the submission stats
             let submission = await GameDatabases.getCurrentActive();
-            if(submission){
-                submission.state = outcome;
-                submission.end_date = new Date();
-                GameDatabases.updateSubmission(submission);
+            if(!submission){
+                throw "No submission received when querying for current active";
+            }
+            submission.state = outcome;
+            if(!submission.start_date) submission.start_date = 'NOW()';
+            submission.end_date = 'NOW()';
+            await GameDatabases.updateSubmission(submission);
+            await GameDatabases.deleteSubmission(submission);
 
-                let quest = await GameDatabases.getQuestByID(submission.quest_id);
-                quest.state = outcome;
-                quest.seconds_played += submission.seconds_played;
-                quest.times_played++;
-                GameDatabases.updateQuest(quest);
+            // Begin updating the quest
+            let quest = await GameDatabases.getQuestByID(submission.quest_id);
+            quest.state = outcome;
+            quest.seconds_played += submission.seconds_played;
+            quest.times_played++;
+
+            // Before we are done with the quest, will we resubmit it?
+            if(resubmit && outcome !== State.S.completed){
+                quest.state = State.Q.submitted;
+                await GameDatabases.createSubmission(submission.quest_id,
+                                                     submission.user_id,
+                                                     submission.comments);
             }
 
+            // Update quest
+            await GameDatabases.updateQuest(quest);
+
+            // Move the next submission into the current slot
             await GameDatabases.advanceActives();
 
             res.status(200).send("OK. Journey has progressed");
@@ -52,13 +69,13 @@ module.exports = function (Config, GameDatabases) {
                 throw "The 'next' game for Journey is already assigned";
 
             submission.state = State.S.active;
-            GameDatabases.updateSubmission(submission);
+            await GameDatabases.updateSubmission(submission);
 
             let quest = {
                 quest_id: submission.quest_id,
                 state: State.Q.active
             };
-            GameDatabases.updateQuest(quest);
+            await GameDatabases.updateQuest(quest);
 
             res.status(200).send("OK. Next game set");
 
@@ -71,7 +88,7 @@ module.exports = function (Config, GameDatabases) {
         try {
             let json = req.body;
             let allow = !!json.allow;
-            let status = GameDatabases.submissionsAllowed(allow);
+            let status = await GameDatabases.submissionsAllowed(allow);
             res.status(200).send("OK. Is allowed: " + status);
         } catch (e) {
             res.status(500).send(e);
@@ -90,13 +107,21 @@ module.exports = function (Config, GameDatabases) {
             if(submission)
                 subCount = await GameDatabases.updateSubmission(submission);
             if(quest)
-                questCount = await GameDatabases.updateQuest(quest);
+                questCount = await GameDatabases.updateQuest(quest, true);
 
             res.status(200).send("OK. Submission updated: " + !!subCount
-                               + " | Quest updated: " + !!questCount);
+                               + " Quest updated: " + !!questCount);
         } catch (e) {
             res.status(500).send(e);
         }
+    });
+
+    router.get('/ping', isAuthenticated, async (req, res) => {
+       try {
+           res.status(200).send("OK");
+       } catch (e) {
+           res.status(500).send(e);
+       }
     });
 
     return router;

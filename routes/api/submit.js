@@ -14,13 +14,13 @@ module.exports = function (TokenDatabase, GameDatabases) {
             let token = json.token;
 
             // Submissions might be closed due to doing a raffle
-            let submissionsAllowed = GameDatabases.submissionsAllowed();
+            let submissionsAllowed = await GameDatabases.submissionsAllowed();
             if (!submissionsAllowed) {
                 console.log('--- Method ' + method + ' blocked.'
                 + ' Submissions closed.'
                 + ' User: ' + user.display_name);
                 errorResponse(res,
-                    'Submission closed',
+                    'Submissions closed',
                     'A raffle is currently in progress. No submissions allowed' +
                     ' until it is completed.');
                 return;

@@ -27,16 +27,18 @@ module.exports = function (MySQL) {
 
     const questModifiableFields = ['title', 'system', 'goal','state',
                                    'seconds_played', 'times_played' ];
-    obj.updateQuest = async (quest) => {
+    const questModifiableFieldsLimited = ['title', 'system', 'goal'];
+    obj.updateQuest = async (quest, limited) => {
         if(!quest.quest_id){
             return 'Missing quest ID';
         }
+        let allowedFields = limited ? questModifiableFieldsLimited : questModifiableFields;
 
         let sqlStart = "UPDATE " + QUESTS + " SET ";
         let sqlArgs = "updated = NOW()";
         var args = [];
         for(let key in quest) {
-            if(questModifiableFields.indexOf(key) === -1) continue;
+            if(allowedFields.indexOf(key) === -1) continue;
             sqlArgs += ", " +  key + " = ?";
             args.push(quest[key]);
         }
@@ -60,7 +62,7 @@ module.exports = function (MySQL) {
     //-----------------------------------------------------------
 
     var submissionsAllowed = true;
-    obj.submissionsAllowed = (allow) => {
+    obj.submissionsAllowed = async (allow) => {
         if (typeof allow !== 'undefined')
             submissionsAllowed = !!allow;
         return submissionsAllowed;
@@ -97,7 +99,12 @@ module.exports = function (MySQL) {
             if(updateModifiableFields.indexOf(key) === -1) continue;
 
             sqlArgs += ", " + key + " = ?";
-            args.push(submission[key]);
+            let val = submission[key];
+            if(val === 'NOW()'){
+                sqlArgs = sqlArgs.slice(0, -1) + val;
+            } else {
+                args.push(val);
+            }
         }
         let sql = sqlStart + sqlArgs + " WHERE uid = ?";
         args.push(submission.submission_id);
@@ -158,15 +165,14 @@ module.exports = function (MySQL) {
     };
 
     obj.setNextActive = async (submission) => {
-        var sql = "INSERT IGNORE INTO " + ACTIVE + " (submission_id, system, state) "
+        var sql = "INSERT INTO " + ACTIVE + " (submission_id, system, state) "
             + " VALUES (?," + JOURNEY + ",?)";
         let row = await MySQL.queryAsync(sql, [submission.submission_id, State.A.next]);
         return row.affectedRows;
     };
 
     obj.getNextActive = async () => {
-        var sql = "SELECT a.uid, a.submission_id, a.system, a.state,"
-                + " s.quest_id, s.seconds_played "
+        var sql = "SELECT a.u*, s.* "
                 + " FROM " + ACTIVE + " AS a"
                     + " LEFT JOIN game_submission AS s"
                     + " ON s.uid = a.submission_id"
@@ -176,8 +182,7 @@ module.exports = function (MySQL) {
     };
 
     obj.getCurrentActive = async () => {
-        var sql = "SELECT a.uid, a.submission_id, a.system, a.state,"
-                + " s.quest_id, s.seconds_played "
+        var sql = "SELECT a.*, s.* "
                 + " FROM " + ACTIVE + " AS a"
                     + " LEFT JOIN game_submission AS s"
                     + " ON s.uid = a.submission_id"
