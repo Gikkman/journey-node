@@ -1,33 +1,111 @@
-extends layout
 include mixins
+extends layout
+
+block header
+    script(src='/js/bootstrap-confirmation.min.js')
 
 block nav
     +nav_bar('submit')
 
-block content
-    .col-md-12
-        h1 Becoming a Quest Giver
-        p 
-            |Below is some information about how to submit Quests to The Journey Project. If this is your first time setting up a quest submisson, please take a few moments to read through these notes. These guide lines will help make quests more enjoyable for everyone.<br>
-            |Should you want to, you can change your quest by simply making a new submission. The old quest will then be removed and your new one will be added. And please keep in mind that we might not be able to play newer games. Generally, as long as the game is released in or before 2000, you'll be safe. 
-    .col-md-4
-        h3 Game & System
-        p These fields will help us know which game (and version) your quest is for. I cannot guarantee that we can get our hands on the game in question but I will try my best. As a rule of thumb, if your suggestion was released in or <b>before the year 2000</b>, I can most likely manage. The exceptions are games for Game Boy Advance, or if I have the game on my #[a(href="http://steamcommunity.com/profiles/76561198046572904/games/?tab=all") Steam Account]. 
-    .col-md-4
-        h3 Goal
-        p Some games doesn't have clear goals, or maybe they loop after a certain point. Anyhow, you can write what you think we should try to achieve before the quest is considered completed. <b>Example</b> goals could be "Beat the game" or "Beat stage 5". And keep goals <b>reasonable</b>; "Complete 100%" in a huge RPG or "Beat Super Expert" in a racing game is not realistic (for me at least). Try to set up goals you think are achievable. If no goal is present, I'll wing it and play till I think we've finished it. 
-    .col-md-4
-        h3 Comments
-        p Here you can write comments that you think are important to know when playing the game but can be very hard to figure out. Some older games have strange and weird mechanics that might need a short explanation, lest we get stuck and make no progress the first 15 minutes. If your game submission would need a comment, you probably know it yourself <b>:-)<b>
-    .col-md-12
-        .alert.alert-dismissible.alert-info(class="fade in")
-            button.close( type="button", data-dismiss="alert", aria-label="close") ×
-            | A friendly reminder <br>
-            | Submissions should not require any additional preparation on my side, or require that a certain viewer is present. If your goal is something I have to read an entire guide for in advance, it is probably not in the spirit of the Journey, and you should probably think of another goal.
-    .col-md-12
-        #alerts
-        #game-form
-            +game-form(1, submission)
-            input(id='token', type='hidden', value=token)
-            button.btn.btn-raised.btn-primary(type='button', onclick='submitForm()') Submit
+block content    
     script(type='text/javascript' src='/js/journey_submit.js')
+    script.
+        init();
+    
+    .col-md-12
+        h1 Quests
+        p
+            |"Quest" is the name we use to describe a submission to The Journey Project. Anyone can submit a quest, given that they fill out the quest form bellow.
+            |In case this is your first time here, I would suggest heading over to our 
+            a(href="/tjp/faq") FaQ page 
+            |and check out the submission guidelines.
+        h4 Reminders
+        lu
+            li
+                | Please keep in mind our 
+                a(href='https://docs.google.com/spreadsheets/d/1DjXXyCKW3KFll17OQoNuyTfY6rlpKAfMkUGYUV-bIKo/edit?usp=sharing') system list
+                | , when making submissions. It is better to have checked the list beforehand,
+                | and know how risky a certain submission is.
+            li
+                | Submissions should not require any specific preparation on my side (such as reading a guide), or require that a certain viewer is present.
+            li
+                | Some submissions will be less popular, and will probably get voted out quicker than others. That doesn't mean there is anything wrong in making them.
+        p
+            | ----------------------------------------------
+        p#message
+        p#alert
+        #form
+            if(!state)
+                +submit-new-quest()
+            else if(state === "Submitted")
+                +existing-quest(submission)
+            else if(state === "Voted out")
+                +resubmit-quest(submission)
+            else if(state === "Active")
+                +active-quest(submission)
+            else if(state === "Completed")
+                +completed-quest(submission)
+            else
+                | An error has occured. Please contact the Admin
+
+//- Mixin for different game forms
+mixin basic-game-form(submission, disabled)
+    - var g = (typeof submission == 'undefined') ? {} : submission;
+    - var d = (typeof disabled == 'undefined') ? true : disabled;
+     //- If submission state is Active, then we want to output 'Next Game' or 'Current Game'
+    - var s = (state === 'Active') ? g.active_state + " Game" : g.state;
+    fieldset.form-horizontal(disabled=d)
+        .form-group.bmd-form-group
+            +text-field-required('Title','QuestTitle',g.title,'Enter title (required)')
+        .form-group.bmd-form-group
+            +text-field-required('System','QuestSystem',g.system,'Enter system (required)')
+        .form-group.bmd-form-group
+            +text-field-required('Goal','QuestGoal',g.goal,'Enter goal (required)')
+        .form-group.bmd-form-group
+            +text-area('Comments','SubmissionComments',g.comments,'Enter comments',3)
+        if(state)
+            .form-group.row
+                label.col-sm-2.control-label(for='state') State
+                .col-sm-3
+                    input#state.form-control(type='text', disabled, value=s)
+                label.col-sm-2.control-label(for='time') Game Time
+                .col-sm-3
+                    input#time.form-control(type='text', disabled, value=g.time)
+        input(id='token', type='hidden', value=token)
+
+
+mixin submit-new-quest()
+    +basic-game-form({}, false)
+    .btn-box
+        button.btn.btn-raised.btn-primary.spc-btn(type='button', onclick='submitQuest()') Submit
+
+mixin existing-quest(submission)
+    +basic-game-form(submission)
+    .btn-box
+        +abandon-button('btndel')
+
+mixin active-quest(submission)
+    +basic-game-form(submission)
+
+mixin resubmit-quest(submission)
+    +basic-game-form(submission)
+    .btn-box
+        button.btn.btn-raised.btn-primary.spc-btn(type='button', onclick='resubmit()') Resubmit
+        +abandon-button('btndel')
+
+mixin completed-quest(submission)
+    +basic-game-form(submission)
+    .btn-box
+        button.btn.btn-raised.btn-primary.spc-btn(type='button', onclick='confirmCompletedQuest()') Confirm
+        
+mixin abandon-button(id)
+    button.btn.btn-raised.spc-btn(id=id, type='button', data-toggle="confirmation") Delete Submission
+    script.
+        var item = $("#" + "#{id}");
+        item.confirmation({
+            rootSelector: '[data-toggle=confirmation]', 
+            popout: true,
+            singleton: true
+        });
+        item.on('confirmed.bs.confirmation', e => abandonQuest());
+        

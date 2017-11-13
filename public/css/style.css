@@ -87,8 +87,22 @@ table{
 }
 .monospace{
     font-family: monospace;
-	font-size: 16px;
-	font-style: normal;
-	font-variant: normal;
-	font-weight: 400;
+    font-size: 16px;
+    font-style: normal;
+    font-variant: normal;
+    font-weight: 400;
+}
+
+/* Submit page CSS */
+/*-------------------------------------------------- */
+.spc-btn{
+    margin-left: 20px;
+    float: right;
+}
+.btn-box{
+    width: 100%;
+    display: inline-block;
+}
+#form{
+    margin: 0 0 10.5px;
 }
