@@ -68,12 +68,13 @@ CREATE TABLE `game_injected` (
 
 ALTER TABLE `journey`.`gamesplayed`
 ADD COLUMN `seconds_quest` INT(16) UNSIGNED NOT NULL AFTER `seconds_played`,
-ADD COLUMN `seconds_total` INT(16) UNSIGNED NOT NULL AFTER `seconds_total`;
+ADD COLUMN `seconds_total` INT(16) UNSIGNED NOT NULL AFTER `seconds_quest`;
 
 DELIMITER $$
 
-DROP TRIGGER IF EXISTS journey.gamesplayed_AFTER_INSERT
-CREATE TRIGGER `journey`.`gamesplayed_BEFORE_INSERT` BEFORE INSERT ON `gamesplayed` FOR EACH ROW
+DROP TRIGGER IF EXISTS journey.gamesplayed_BEFORE_INSERT$$
+USE `journey`$$
+CREATE DEFINER = CURRENT_USER TRIGGER `journey`.`gamesplayed_BEFORE_INSERT` BEFORE INSERT ON `gamesplayed` FOR EACH ROW
 BEGIN
 	SET NEW.`seconds_total` = (SELECT SUM(`seconds_played`) FROM gamesplayed) + NEW.`seconds_played`;
 END$$
