@@ -12,6 +12,7 @@
     "express-session": "^1.15.5",
     "helmet": "*",
     "jade": "~1.11.0",
+    "marked": "^0.3.6",
     "morgan": "~1.7.0",
     "mysql": "~2.12.0",
     "passport": "^0.2.2",
