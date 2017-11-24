@@ -24,7 +24,6 @@ module.exports = function (MySQL, GameDatabases) {
             if(!submission.start_date) submission.start_date = 'NOW()';
             submission.end_date = 'NOW()';
             await GameDatabases.updateSubmission(Trans, submission);
-            await GameDatabases.deleteSubmission(Trans, submission);
 
             // Update the quest
             let quest = await GameDatabases.getQuestByID(Trans, submission.quest_id);
