@@ -14,7 +14,16 @@ module.exports = function (MySQL, TokenDatabase, GameDatabases) {
                 submission.title = quest.title;
                 submission.system = quest.system;
                 submission.goal = quest.goal;
-                submission.time = toHhmmss(submission.seconds_played + quest.seconds_played);
+
+                // While a game is active, only the submission timer is ticking
+                // but once the game has been completed/voted out, all the time
+                // is added together and stored in the quest.
+                if(submission.active_state){
+                    submission.time = toHhmmss(submission.seconds_played + quest.seconds_played);
+                }
+                else {
+                    submission.time = toHhmmss(quest.seconds_played);
+                }
 
                 // States are in lower case. This will upper case the leading char
                 let temp = submission.state;
