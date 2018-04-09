@@ -77,7 +77,7 @@ mixin basic-game-form(submission, disabled)
 mixin submit-new-quest()
     +basic-game-form({}, false)
     .btn-box
-        button.btn.btn-raised.btn-primary.spc-btn(type='button', onclick='submitQuest()') Submit
+        button.btn.btn-primary.spc-btn(type='button', onclick='submitQuest()') Submit
 
 mixin existing-quest(submission)
     +basic-game-form(submission)
@@ -90,22 +90,14 @@ mixin active-quest(submission)
 mixin resubmit-quest(submission)
     +basic-game-form(submission)
     .btn-box
-        button.btn.btn-raised.btn-primary.spc-btn(type='button', onclick='resubmit()') Resubmit
+        button.btn.btn-primary.spc-btn(type='button', onclick='resubmit()') Resubmit
         +abandon-button('btndel')
 
 mixin completed-quest(submission)
     +basic-game-form(submission)
     .btn-box
-        button.btn.btn-raised.btn-primary.spc-btn(type='button', onclick='confirmCompletedQuest()') Confirm
+        button.btn.btn-primary.spc-btn(type='button', onclick='confirmCompletedQuest()') Confirm
         
 mixin abandon-button(id)
-    button.btn.btn-raised.spc-btn(id=id, type='button', data-toggle="confirmation") Delete Submission
-    script.
-        var item = $("#" + "#{id}");
-        item.confirmation({
-            rootSelector: '[data-toggle=confirmation]', 
-            popout: true,
-            singleton: true
-        });
-        item.on('confirmed.bs.confirmation', e => abandonQuest());
+    +confirm-button('btn-primary spc-btn', id, 'abandonQuest()')
         

@@ -64,19 +64,16 @@ mixin nav_header
 //--------------------------------------------------------
 //---    Button mixins
 //--------------------------------------------------------
-mixin button(style, href, size)
-    - var style = (typeof style === 'undefined') ? "default" : style
-    - var href = (typeof href === 'undefined') ? "#" : href
-    case size
-        when "large"
-            - size = "btn-lg"
-        when "small"
-            - size = "btn-sm"
-        when "mini"
-            - size = "btn-xs"
- 
-    a( class=["btn", "btn-" + style, size], href=href )
-        block
+mixin confirm-button(prio, id, onConfirmation)
+    button.btn(class=prio, id=id, type='button', data-toggle="confirmation") Delete Submission
+    script.
+        var item = $("#" + "#{id}");
+        item.confirmation({
+            rootSelector: '[data-toggle=confirmation]', 
+            popout: true,
+            singleton: true
+        });
+        item.on('confirmed.bs.confirmation', e => #{onConfirmation});
         
 //--------------------------------------------------------
 //---   Alert mixins
