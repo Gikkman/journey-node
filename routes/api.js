@@ -10,12 +10,10 @@ module.exports = function (MySQL) {
     // Fetch handlers
     var submit = require('./api/submit.js')(MySQL, TokenDatabase, GameDatabases);
     var journey = require('./api/journey.js')(MySQL, GameDatabases);
-    var transact = require('./api/transact.js')(MySQL);
 
     // Api routes
     router.use('/submit', submit);
     router.use('/journey', journey);
-    router.use('/trans', transact);
 
     router.get('/', (req, res) => {
        res.status(200).send("Hello");

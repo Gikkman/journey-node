@@ -9,7 +9,7 @@ module.exports = function (App, Passport, MySQL) {
     var GameDatabases = require("../modules/game_databases.js")(MySQL);
 
     // Twitch requires up to do some security lookup if you are logged in
-    require("./_twitch_lookup.js")(App, UserDatabase, JP_URL + "/login");
+    require("./_twitch_lookup.js")(App, UserDatabase);
 
     var api = require('./api.js')(MySQL);
     var auth = require('./auth.js')(Passport, JP_URL);

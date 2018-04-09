@@ -1,4 +1,4 @@
-module.exports = (App, UserDatabase, URL) => {
+module.exports = (App, UserDatabase) => {
     //=======================================================
     //==    Twitch required login check
     //=======================================================
