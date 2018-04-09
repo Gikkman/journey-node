@@ -74,7 +74,7 @@ mixin confirm-button(prio, id, onConfirmation)
             singleton: true
         });
         item.on('confirmed.bs.confirmation', e => #{onConfirmation});
-        
+
 //--------------------------------------------------------
 //---   Alert mixins
 //--------------------------------------------------------
@@ -83,12 +83,6 @@ mixin alert(id, style, message, strong)
         button.close(href='#', type='button') ×
         strong #{strong}
         | #{message}
-
-mixin title-alert
-    +alert("titleMissingAlert", 'warning', "A submission requires that a title is specified!", "Title missing!")
-
-mixin system-alert
-    +alert("systemMissingAlert", 'warning', "A submission requires that a system is specified!", "System missing!")
 
 //--------------------------------------------------------
 //---   Panel mixins

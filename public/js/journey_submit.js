@@ -1,4 +1,5 @@
 var API_URL = "/api";
+
 function init() {
     $(function () {
         $('[data-toggle="popover"]').popover();
