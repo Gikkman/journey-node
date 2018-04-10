@@ -9,7 +9,7 @@ $( () => {
     });
     
 });
-
+ 
 var alerts = {};
 function createAlert(id, type, strong, message) {
     if (alerts[id])
