@@ -1,15 +1,14 @@
 var API_URL = "/api";
 
-function init() {
-    $(function () {
-        $('[data-toggle="popover"]').popover();
-        $('[data-toggle=confirmation]').confirmation({
-            rootSelector: '[data-toggle=confirmation]'
-        });
+$( () => {
+    $('[data-toggle="popover"]').popover();
+    $('[data-toggle=confirmation]').confirmation({
+        rootSelector: '[data-toggle=confirmation]',
+        popout: true,
+        singleton: true
     });
-    console.log("init");
-}
-
+    
+});
 
 var alerts = {};
 function createAlert(id, type, strong, message) {

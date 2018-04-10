@@ -65,15 +65,9 @@ mixin nav_header
 //---    Button mixins
 //--------------------------------------------------------
 mixin confirm-button(prio, id, onConfirmation)
-    button.btn(class=prio, id=id, type='button', data-toggle="confirmation") Delete Submission
+    button.btn(class=prio, id=id, type='button', data-toggle="confirmation", js-confirm-action=onConfirmation) Delete Submission
     script.
-        var item = $("#" + "#{id}");
-        item.confirmation({
-            rootSelector: '[data-toggle=confirmation]', 
-            popout: true,
-            singleton: true
-        });
-        item.on('confirmed.bs.confirmation', e => #{onConfirmation});
+       $("##{id}").on('confirmed.bs.confirmation', e => #{onConfirmation});
 
 //--------------------------------------------------------
 //---   Alert mixins
