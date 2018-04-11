@@ -6,7 +6,7 @@ module.exports = function(Morgan){
         output.push(tokens.url(req, res), '-');
         output.push(status(req, res));
         output.push(tokens['response-time'](req, res), 'ms', '-');
-        output.push(tokens.res(req, res, 'content-length'), '-');
+        output.push(tokens.res(req, res, 'content-length'));
         output.push(user(req, res));
         
         return output.join(' ');
