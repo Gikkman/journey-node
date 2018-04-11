@@ -8,7 +8,7 @@ var session = require('express-session');
 var MySQLStore = require('express-mysql-session')(session);
 var path = require('path');
 var favicon = require('serve-favicon');
-var logger = require('morgan');
+var morgan = require('morgan');
 var helmet = require('helmet');
 var bodyParser = require('body-parser');
 var passport = require('passport');
@@ -24,7 +24,10 @@ app.use(helmet());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(logger('dev'));
+
+// Config logging
+var logger = require("./modules/morgan_formatter.js")(morgan);
+app.use(logger);
 
 markdown.setOptions({
     breaks: true
