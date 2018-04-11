@@ -62,6 +62,9 @@ module.exports = function (MySQL, TokenDatabase, GameDatabases) {
                 await Transaction.commitAsync();
             }
         } catch (e) {
+            console.log('--- Method ' + method + ' processed.'
+                + ' Error: ' + e.message
+                + ' User: ' + user.display_name);
             errorResponse(res, e, "Unexpected error when making a submission");
         }
     });
