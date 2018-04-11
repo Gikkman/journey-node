@@ -32,7 +32,7 @@ module.exports = function (MySQL, GameDatabases) {
             quest.times_played++;
 
             // Before we are done with the quest, will we resubmit it?
-            if(resubmit && outcome !== State.S.completed){
+            if(resubmit && outcome === State.S.voted_out){
                 quest.state = State.Q.submitted;
                 await GameDatabases.createSubmission(Trans,
                                                      submission.quest_id,

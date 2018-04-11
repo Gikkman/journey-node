@@ -32,7 +32,9 @@ module.exports = function (MySQL, TokenDatabase, GameDatabases) {
                 console.log('--- Method ' + method + ' blocked.'
                 + ' Token invalid.'
                 + ' User: ' + user.display_name);
-                errorResponse(res, "Invalid session", "Submission session timed out");
+                errorResponse(res, 
+                    "Invalid session", 
+                    "Submission session timed out, or you have multiple submission tabs open");
                 return;
             }
 
