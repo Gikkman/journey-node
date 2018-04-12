@@ -42,7 +42,7 @@ function status(req, res) {
     if(status >= 500) {
         return Colors.FG.Red + 200 + Colors.Reset;
     }
-    return Colors.GB.Red + Colors.FG.Black + status + Colors.Reset;
+    return Colors.BG.Red + Colors.FG.Black + status + Colors.Reset;
 }
 
 /**
