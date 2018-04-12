@@ -188,9 +188,22 @@ async function doResubmit(res, user, payload, GameDatabases, Trans) {
             return "fail - submission state";
         }
 
+        // Delete the submission
         GameDatabases.deleteSubmission(Trans, submission);
+
+        // Make sure that the user does not have a submission now that we deleted it
+        let temp = await GameDatabases.getSubmissionByUserID(Trans, user.user_id);
+        if(temp){
+            errorResponse(res,
+                'Resubmission failed',
+                'You somehow already have a submission in. Please contact me.');
+            return "fail - submission already exist";
+        }
+
+        // Create a new submission
         GameDatabases.createSubmission(Trans, submission.quest_id, user.user_id, submission.comments);
 
+        // Update the quest
         let quest = await GameDatabases.getQuestByID(Trans, submission.quest_id);
         quest.state = State.Q.submitted;
         GameDatabases.updateQuest(Trans, quest);
