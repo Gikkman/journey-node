@@ -21,9 +21,23 @@ module.exports = function (MySQL, GameDatabases) {
                 throw "No submission received when querying for current active";
             }
             submission.state = outcome;
-            if(!submission.start_date) submission.start_date = 'NOW()';
+            if(!submission.start_date){
+                submission.start_date = 'NOW()';
+            } 
             submission.end_date = 'NOW()';
             await GameDatabases.updateSubmission(Trans, submission);
+            
+            // If a submission should be resubmitted, we can delete the old
+            // submission (we will create a new submission further down).
+            // If a submission should not be resubmitted, we do not delete it
+            // since the user will delete it themselves when they click "Confirm"
+            if(resubmit && outcome === State.S.voted_out){
+                await GameDatabases.deleteSubmission(Trans, submission);
+                await GameDatabases.createSubmission(Trans,
+                    submission.quest_id,
+                    submission.user_id,
+                    submission.comments);
+            }
 
             // Update the quest
             let quest = await GameDatabases.getQuestByID(Trans, submission.quest_id);
@@ -31,16 +45,12 @@ module.exports = function (MySQL, GameDatabases) {
             quest.seconds_played += submission.seconds_played;
             quest.times_played++;
 
-            // Before we are done with the quest, will we resubmit it?
+            // If the submission was auto-resubmitted, we set the quest as submitted too
             if(resubmit && outcome === State.S.voted_out){
                 quest.state = State.Q.submitted;
-                await GameDatabases.createSubmission(Trans,
-                                                     submission.quest_id,
-                                                     submission.user_id,
-                                                     submission.comments);
             }
 
-            // Update quest
+            // Write quest update
             await GameDatabases.updateQuest(Trans, quest);
 
             // Move the next submission into the current slot
