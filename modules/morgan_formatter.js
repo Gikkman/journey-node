@@ -3,8 +3,8 @@ module.exports = function(Morgan){
         let output = [];
 
         output.push(tokens.method(req, res));
-        output.push(tokens.url(req, res), '-');
-        output.push(status(req, res));
+        output.push(tokens.url(req, res));
+        output.push(status(req, res), '-');
         output.push(tokens['response-time'](req, res), 'ms', '-');
         output.push(tokens.res(req, res, 'content-length'));
         output.push(user(req, res));
