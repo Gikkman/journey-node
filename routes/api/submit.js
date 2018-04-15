@@ -5,13 +5,13 @@ module.exports = function (MySQL, TokenDatabase, GameDatabases) {
     var router = express.Router();
 
     router.post('/', isAuthenticated, async (req, res) => {
-        try {
-            let json = req.body;
+        let json = req.body;
 
-            let user = req.user;
-            let method = json.method;
-            let payload = json.payload;
-            let token = json.token;
+        let user = req.user;
+        let method = json.method;
+        let payload = json.payload;
+        let token = json.token;
+        try {
 
             // Submissions might be closed due to doing a raffle
             let submissionsAllowed = await GameDatabases.submissionsAllowed();
