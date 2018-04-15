@@ -30,19 +30,21 @@ function status(req, res) {
         ? res.statusCode
         : undefined
 
-    if(status >= 200) {
-        return Colors.FG.Green + 200 + Colors.Reset;
-    }
-    if(status >= 300) {
-        return Colors.FG.Cyan + 200 + Colors.Reset;
-    }
-    if(status >= 400) {
-        return Colors.FG.Yellow + 200 + Colors.Reset;
-    }
     if(status >= 500) {
-        return Colors.FG.Red + 200 + Colors.Reset;
+        return Colors.FG.Red + status + Colors.Reset;
     }
-    return Colors.BG.Red + Colors.FG.Black + status + Colors.Reset;
+    else if(status >= 400) {
+        return Colors.FG.Yellow + status + Colors.Reset;
+    }
+    else if(status >= 300) {
+        return Colors.FG.Cyan + status + Colors.Reset;
+    }
+    else if(status >= 200) {
+        return Colors.FG.Green + status + Colors.Reset;
+    }
+    else {
+        return Colors.BG.Red + Colors.FG.Black + status + Colors.Reset;
+    }
 }
 
 /**
