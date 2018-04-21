@@ -10,9 +10,14 @@ html
 
     meta( name='description', content='Journey' )
 
-    +bootstrap()
-    +bootswatch("flatly")
+    //- Bootstrap & jQuery
+    script(src='/lib/jquery.min.js')
+    script(src='/lib/bootstrap.min.js')
+    link(rel='stylesheet', href='/lib/bootstrap.min.css')
+
+    //- My stylesheet
     link(rel='stylesheet', href='/css/style.css')
+
     block header
       
   body

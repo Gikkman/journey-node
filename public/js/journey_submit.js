@@ -58,6 +58,15 @@ function submitQuest() {
     }
 }
 
+function openmodal(){
+    var modal = new Modal();
+    modal.setBody("Hello World");
+    modal.setTitle("Title");
+    modal.setButton("OK", () => location.reload());
+    modal.onClosed( () => location.reload());
+    modal.show();
+}
+
 function resubmit() {
     var token = $("#token").val();
     var obj = {};
@@ -93,10 +102,22 @@ function post(json) {
         statusCode: {
             403: function () {
                 window.location.href = '/auth/twitch/submit';
+            },
+            400: function(reply) {
+                modalReply(reply.responseJSON);
             }
         },
         success: function (reply) {
-            $("div.main-content").replaceWith(reply);
+            modalReply(reply);
         }
     });
+}
+
+function modalReply(reply) {
+    let modal = new Modal();
+    modal.setBody(reply.message);
+    modal.setTitle(reply.title);
+    modal.setButton('OK', () => {location.reload()});
+    modal.onClosed( () => {location.reload()} );
+    modal.show();
 }

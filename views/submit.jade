@@ -2,13 +2,14 @@ include mixins
 extends layout
 
 block header
-    script(src='/js/bootstrap-confirmation.min.js')
+    script(src='/lib/bootstrap-confirmation.min.js')
 
 block nav
     +nav_bar('submit')
 
 block content    
     script(type='text/javascript' src='/js/journey_submit.js')
+    script(type='text/javascript' src='/js/journey_modal.js')
     
     .col-md-12
         h1 Quests
@@ -45,6 +46,7 @@ block content
                 +completed-quest(submission)
             else
                 | An error has occured. Please contact the Admin
+    +modal()
 
 //- Mixin for different game forms
 mixin basic-game-form(submission, disabled)

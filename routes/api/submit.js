@@ -264,17 +264,15 @@ function isAuthenticated(req, res, next) {
 
 function errorResponse(res, error, message) {
     var title = error ? (error.message ? error.message : error) : "";
-    res.render('message',
-        {title: title,
-            status: 1001,
-            message: message}
-    );
+    res.status(400).json({
+        title: title,
+        message: message
+    });
 }
 
 function successResponse(res, title, message) {
-    res.render('message',
-        {title: title,
-            message: message
-        }
-    );
+    res.json({
+        title: title,
+        message: message
+    });
 }
