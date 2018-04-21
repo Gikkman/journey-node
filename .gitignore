@@ -12,12 +12,13 @@ Desktop.ini
 .directory
 *~
 
-
 # npm
 node_modules
 *.log
 *.gz
 
+# VSCode
+.vscode
 
 # Coveralls
 coverage
