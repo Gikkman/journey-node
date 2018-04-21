@@ -23,7 +23,7 @@ app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(helmet());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {immutable: true, maxAge: 1000 * 60 * 60 * 12}));
 
 // Config logging
 var logger = require("./modules/morgan_formatter.js")(morgan);
