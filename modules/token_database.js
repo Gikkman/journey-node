@@ -25,13 +25,27 @@ module.exports = function(MySQL){
                 'ON t.user_id = u.user_id ' +
                 'WHERE t.token = ? AND t.user_id = ?',
                 [token, user_id] );
+            await MySQL.queryAsync(
+                "DELETE from submissiontokens WHERE token = ? AND user_id = ?",
+                [token, user_id]
+            );
             //If we didn't get a token (i.e. the token didn't exist)
             if(rows.length === 0){
                 data.valid = false;
+                data.log = "Token missing";
+                data.reason = 
+                    "No token found. Are you using multiple tabs? " +
+                    "That is the most common reason for this error. " +
+                    "Reload the page and try again.";
             }
             //If token is too old
             else if( (new Date() - rows[0].created) > OLD){
                 data.valid = false;
+                data.log = "Token timed out";
+                data.reason = 
+                    "Token timed out. " +
+                    "You took to long from loading this page till making a submission. " +
+                    "Reload the page and try again."
             } 
             //If this token is fresh enough
             else {

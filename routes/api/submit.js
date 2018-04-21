@@ -29,12 +29,12 @@ module.exports = function (MySQL, TokenDatabase, GameDatabases) {
             // Validate submission token
             let tokenData = await TokenDatabase.validateToken(token, user.user_id);
             if (!tokenData.valid) {
-                console.log('--- Method ' + method + ' blocked.'
-                + ' Token invalid.'
+                console.log('--- Method ' + method + ' blocked. '
+                + tokenData.log
                 + ' User: ' + user.display_name);
                 errorResponse(res, 
                     "Invalid session", 
-                    "Submission session timed out, or you have multiple submission tabs open");
+                    tokenData.reason);
                 return;
             }
 
@@ -82,6 +82,16 @@ async function doAbandon(res, user, payload, GameDatabases, Trans) {
     try {
         let submission = await GameDatabases.getSubmissionByUserID(Trans, user.user_id);
 
+        // Sanity check that we have a submmission
+        if(!submission){
+            errorResponse(res, 
+                "Abandon failed",
+                "Could not find a submission to abandon. " +
+                "Please contact me."
+            );
+            return "fail - no submission found"
+        }
+
         // Active submissions cannot be deleted
         if (submission.state === State.S.active) {
             errorResponse(res,
@@ -121,6 +131,16 @@ async function doAbandon(res, user, payload, GameDatabases, Trans) {
 async function doConfirm(res, user, payload, GameDatabases, Trans) {
     try {
         let submission = await GameDatabases.getSubmissionByUserID(Trans, user.user_id);
+
+        // Sanity check that the user has a submission
+        if(!submission){
+            errorResponse(res, 
+                "Confirmation failed",
+                "Could not find a submission to confirm for. " +
+                "Please contact me."
+            );
+            return "fail - no submission found"
+        }
 
         // Can only confirm a completed submission
         if (submission.state !== State.S.completed) {
@@ -180,12 +200,22 @@ async function doResubmit(res, user, payload, GameDatabases, Trans) {
     try {
         let submission = await GameDatabases.getSubmissionByUserID(Trans, user.user_id);
 
+        // Sanity check that we have a submission
+        if(!submission){
+            errorResponse(res, 
+                "Resubmission failed",
+                "Could not find a submission to resubmit. " +
+                "Please contact me."
+            );
+            return "fail - no submission found"
+        }
+
         // You may only resubmit a game that is voted out
         if (submission.state !== State.S.voted_out) {
             errorResponse(res,
                 'Resubmission failed',
                 'You currently do not have a submission that is resubmittable');
-            return "fail - submission state";
+            return "fail - invalid state";
         }
 
         // Delete the submission
