@@ -7,8 +7,48 @@ $( () => {
         popout: true,
         singleton: true
     });
-    
+    $.ajax({
+        url: API_URL + "/submit/message",
+        type: 'GET',
+        statusCode: {
+            403: function () {
+                window.location.href = '/auth/twitch/submit';
+            }
+        },
+        success: function (reply) {
+            if(reply) {
+                let modal = new Modal();
+                modal.setBody(reply.message);
+                modal.setTitle(reply.title);
+                modal.setButton('OK', () => {
+                    modal.close();
+                });
+                modal.onClosed( () => {
+                    deleteMessage();
+                });
+                modal.show();
+            }
+            else {
+                console.log("No login message found");
+            }
+        }
+    });
 });
+
+function deleteMessage() {
+    $.ajax({
+        url: API_URL + "/submit/message",
+        type: 'DELETE',
+        statusCode: {
+            403: function () {
+                window.location.href = '/auth/twitch/submit';
+            }
+        },
+        success: function (reply) {
+            console.log("Message confirmed " + reply);
+        }
+    });
+}
 
 var alerts = {};
 function createAlert(id, type, strong, message) {
@@ -117,7 +157,11 @@ function modalReply(reply) {
     let modal = new Modal();
     modal.setBody(reply.message);
     modal.setTitle(reply.title);
-    modal.setButton('OK', () => {location.reload()});
-    modal.onClosed( () => {location.reload()} );
+    modal.setButton('OK', () => {
+        location.reload();
+    });
+    modal.onClosed( () => {
+        location.reload();
+    });
     modal.show();
 }

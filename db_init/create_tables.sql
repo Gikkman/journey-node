@@ -1,3 +1,18 @@
+
+CREATE TABLE `users` (
+  `user_id` int(16) unsigned NOT NULL,
+  `created` datetime NOT NULL,
+  `last_seen` datetime NOT NULL,
+  `user_name` varchar(25) NOT NULL,
+  `display_name` varchar(25) NOT NULL,
+  `type` varchar(10) NOT NULL DEFAULT 'default',
+  `verified` int(1) unsigned NOT NULL DEFAULT '0',
+  `access_token` varchar(100) NOT NULL DEFAULT '',
+  `refresh_token` varchar(100) NOT NULL DEFAULT '',
+  PRIMARY KEY (`user_id`),
+  UNIQUE KEY `id_UNIQUE` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE `chat_customcommands` (
   `command` varchar(15) NOT NULL,
   `response` text NOT NULL,
@@ -126,16 +141,12 @@ CREATE TABLE `user_variables` (
   CONSTRAINT `fk_var_uid` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `users` (
-  `user_id` int(16) unsigned NOT NULL,
+CREATE TABLE `user_site_message` (
+  `user_id` int(10) unsigned NOT NULL,
   `created` datetime NOT NULL,
-  `last_seen` datetime NOT NULL,
-  `user_name` varchar(25) NOT NULL,
-  `display_name` varchar(25) NOT NULL,
-  `type` varchar(10) NOT NULL DEFAULT 'default',
-  `verified` int(1) unsigned NOT NULL DEFAULT '0',
-  `access_token` varchar(100) NOT NULL DEFAULT '',
-  `refresh_token` varchar(100) NOT NULL DEFAULT '',
+  `title` varchar(50) NOT NULL,
+  `message` text NOT NULL,
   PRIMARY KEY (`user_id`),
-  UNIQUE KEY `id_UNIQUE` (`user_id`)
+  CONSTRAINT `fk_user_submit_message_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+SELECT * FROM journey.sessions;

@@ -39,8 +39,10 @@ app.locals.markdown = markdown;
 //=======================================================
 global.appRoot = path.resolve(__dirname + "/");
 global.modules = path.resolve(__dirname + "/modules/");
-global.http = require("./modules/async_http.js")(https);
 
+global.http = require("./modules/async_http.js")(https);
+global._state = require("./modules/state.js")();
+global._site_message = require("./modules/site_message.js")();
 //=======================================================
 //==    Config
 //=======================================================
@@ -49,8 +51,7 @@ console.log('--- Server starting. Config mode: ' + _config_mode);
 var _config = require("./secret/config.json")[_config_mode];
 global._config = _config;
 
-var state = require("./modules/state.js")();
-global._state = state;
+
 
 //=======================================================
 //==    Database

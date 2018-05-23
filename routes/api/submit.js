@@ -4,6 +4,52 @@ const State = global._state;
 module.exports = function (MySQL, TokenDatabase, GameDatabases) {
     var router = express.Router();
 
+    router.get('/message', isAuthenticated, async (req, res) => {
+        let sql = 'SELECT title, message FROM user_site_message WHERE user_id = ?';
+        let user = req.user;
+
+        try{
+            let row = await MySQL.queryAsync(
+                sql, [user.user_id]);
+
+            if(row && row[0]) {
+                console.log('--- Get Message processed.'
+                    + ' Outcome: content. '
+                    + 'User: ' + user.display_name);
+                let title = row[0].title;
+                let message = row[0].message;
+                successResponse(res, title, message);
+            } else {
+                console.log('--- Get Message processed.'
+                    + ' Outcome: no content. '
+                    + 'User: ' + user.display_name);
+                res.send();
+            }
+        } catch (e) {
+            console.log('--- Get Message processed.'
+                + ' Error: ' + e.message
+                + ' User: ' + user.display_name);
+            errorResponse(res, e, "Unexpected error when fetching message");
+        }
+    });
+
+    router.delete('/message', isAuthenticated, async (req, res) => {
+        let sql = 'DELETE FROM user_site_message WHERE user_id = ?';
+        let user = req.user;
+        try {
+            await MySQL.queryAsync(sql, [user.user_id]);
+            console.log('--- Delete Message processed.'
+                    + ' Outcome: OK. '
+                    + 'User: ' + user.display_name);
+            res.sendStatus(200);
+        } catch (e) {
+            console.log('--- Delete Message.'
+                + ' Error: ' + e.message
+                + ' User: ' + user.display_name);
+            errorResponse(res, e, "Unexpected error when deleting message");
+        }
+    });
+
     router.post('/', isAuthenticated, async (req, res) => {
         let json = req.body;
 
@@ -32,8 +78,8 @@ module.exports = function (MySQL, TokenDatabase, GameDatabases) {
                 console.log('--- Method ' + method + ' blocked. '
                 + tokenData.log
                 + ' User: ' + user.display_name);
-                errorResponse(res, 
-                    "Invalid session", 
+                errorResponse(res,
+                    "Invalid session",
                     tokenData.reason);
                 return;
             }
@@ -84,7 +130,7 @@ async function doAbandon(res, user, payload, GameDatabases, Trans) {
 
         // Sanity check that we have a submmission
         if(!submission){
-            errorResponse(res, 
+            errorResponse(res,
                 "Abandon failed",
                 "Could not find a submission to abandon. " +
                 "Please contact me."
@@ -134,7 +180,7 @@ async function doConfirm(res, user, payload, GameDatabases, Trans) {
 
         // Sanity check that the user has a submission
         if(!submission){
-            errorResponse(res, 
+            errorResponse(res,
                 "Confirmation failed",
                 "Could not find a submission to confirm for. " +
                 "Please contact me."
@@ -202,7 +248,7 @@ async function doResubmit(res, user, payload, GameDatabases, Trans) {
 
         // Sanity check that we have a submission
         if(!submission){
-            errorResponse(res, 
+            errorResponse(res,
                 "Resubmission failed",
                 "Could not find a submission to resubmit. " +
                 "Please contact me."

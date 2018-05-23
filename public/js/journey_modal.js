@@ -4,7 +4,7 @@ function Modal () {
     this.modalBody = $('#modal-body');
     this.modalTitle = $('#modal-header');
 
-    this.buttonIndex = 0; 
+    this.buttonIndex = 0;
 
     this.setButton = function(title, onClick) {
         let buttonID = "modal-btn-" + this.buttonIndex++;
@@ -13,20 +13,21 @@ function Modal () {
                     ' type="button"' +
                     ' class="btn btn-primary modal-button"' +
                     ' >' + title + '</button>');
-                
+
         this.modalFooter.html(b);
         this.modalFooter.on('click', '#' + buttonID, onClick);
     };
-    
+
     this.setBody = function (content){
         this.modalBody.html('<div>' + content + '</div>');
     };
 
     this.setTitle = function (title){
         this.modalTitle.text(title);
-    }
+    };
 
     this.onClosed = function (callback) {
+        this.modal.unbind('hide.bs.modal');
         this.modal.on('hide.bs.modal',callback);
     };
 
@@ -38,8 +39,6 @@ function Modal () {
     };
 
     this.close = function() {
-        this.modal.modal({
-            show: false
-        });
+        this.modal.modal('hide');
     };
 };
