@@ -71,12 +71,12 @@ function findOrCreateTwitch(profile, done, MySQL){
                 done(err);
             else {
                 // affectedRows = 1 means this is a user we haven't seen before
-//                if(result.affectedRows === 1) {
+                if(result.affectedRows === 1) {
                     console.log('--- First time login detected.'
                             + ' User: ' + profile.displayName);
                     let message = global._site_message.WELCOME;
                     SiteMessageDatabase.setSiteMessage(MySQL, profile.id, message);
-//                }
+                }
                 postInsertUpdate(profile, MySQL, done);
             }
         }
