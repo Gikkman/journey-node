@@ -23,7 +23,7 @@ module.exports = () => {
               + "Once you've made a submission, it will stay in our raffle pool"
               + " until you win or manually delete it. Once your submission's"
               + " been played, if it wasn't completed, you will have the ability"
-              + " to resubmit it (Gikk might also re-submitted it himself). If"
+              + " to resubmit it (Gikk might also re-submit it himself). If"
               + " it was completed, or you don't want to resubmit it, you may "
               + " instead go ahead and make a new submission."
               + "<p>"
