@@ -2,7 +2,7 @@ var express = require('express');
 const State = global._state;
 const Config = global._config;
 
-module.exports = function (MySQL, GameDatabases) {
+module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
     var router = express.Router();
 
     router.post('/progress', isAuthenticated, async (req, res) => {
@@ -26,7 +26,7 @@ module.exports = function (MySQL, GameDatabases) {
             } 
             submission.end_date = 'NOW()';
             await GameDatabases.updateSubmission(Trans, submission);
-            
+
             // If a submission should be resubmitted, we delete the old
             // submission and create a new one, pointing to the same quest.
             // If a submission should not be resubmitted, we do not delete it
@@ -55,6 +55,33 @@ module.exports = function (MySQL, GameDatabases) {
 
             // Move the next submission into the current slot
             await GameDatabases.advanceActives(Trans);
+
+            // Set the correct site message for the user who had the submission ended
+            // For backwards compability, if no review is supplied, ignore this
+            let review = json.review;
+            if(review) {
+                let formatter = global.formatter;
+
+                let messageData = {};
+                messageData.rating = review.rating;
+                messageData.times_played = quest.times_played;
+                messageData.date = formatter.today();
+                messageData.time = formatter.toHhmmss(submission.seconds_played);
+                messageData.total_time = formatter.toHhmmss(quest.seconds_played);
+
+                let message;
+                if(outcome === State.S.completed) {
+                    message = global._site_message.COMPLETED;
+                }
+                else if (outcome === State.S.voted_out && resubmit) {
+                    message = global._site_message.VOTED_OUT_RESUBMIT;
+                }
+                else if (outcome === State.S.voted_out) {
+                    message = global._site_message.VOTED_OUT;
+                }
+                message = message.format(messageData);
+                SiteMessageDB.setSiteMessage(Trans, submission.user_id, message);
+            }
 
             // Commit transaction and send OK
             await Trans.commitAsync();
