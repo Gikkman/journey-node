@@ -27,8 +27,8 @@ module.exports = function (MySQL, GameDatabases) {
             submission.end_date = 'NOW()';
             await GameDatabases.updateSubmission(Trans, submission);
             
-            // If a submission should be resubmitted, we can delete the old
-            // submission (we will create a new submission further down).
+            // If a submission should be resubmitted, we delete the old
+            // submission and create a new one, pointing to the same quest.
             // If a submission should not be resubmitted, we do not delete it
             // since the user will delete it themselves when they click "Confirm"
             if(resubmit && outcome === State.S.voted_out){
