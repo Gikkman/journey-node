@@ -41,6 +41,8 @@ global.appRoot = path.resolve(__dirname + "/");
 global.modules = path.resolve(__dirname + "/modules/");
 
 global.http = require("./modules/async_http.js")(https);
+global.formatter = require("./modules/formatter.js")();
+
 global._state = require("./modules/state.js")();
 global._site_message = require("./modules/site_message.js")();
 //=======================================================
