@@ -5,13 +5,15 @@ module.exports = function(){
             completed: "completed",
             voted_out: "voted out",
             active: "active",
-            abandoned: "abandoned"
+            abandoned: "abandoned",
+            suspended: "suspended"
         },
         S: {
             submitted: "submitted",
             completed: "completed",
             voted_out: "voted out",
-            active: "active"
+            active: "active",
+            suspended: "suspended"
         },
         A: {
             current: "current",

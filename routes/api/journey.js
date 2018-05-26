@@ -66,6 +66,51 @@ module.exports = function (MySQL, GameDatabases) {
         }
     });
 
+    router.post('/suspend', isAuthenticated, async (req, res) => {
+        let Trans = await MySQL.transaction();
+        try {
+            let json = req.body;
+
+            // Update the submission stats
+            let submission = await GameDatabases.getCurrentActive(Trans);
+            if(!submission){
+                throw "No submission received when querying for current active";
+            }
+            submission.state = State.S.suspended;
+            await GameDatabases.updateSubmission(Trans, submission);
+
+            // Update the quest
+            let quest = await GameDatabases.getQuestByID(Trans, submission.quest_id);
+            quest.state = State.Q.suspended;
+            await GameDatabases.updateQuest(Trans, quest);
+
+            // Move the next submission into the current slot
+            await GameDatabases.advanceActives(Trans);
+
+            // Set the site message for the user
+            let comment = json.comment;
+            if(!comment) {
+                throw "No suspension comment sent. Please supply one under 'comment'";
+            }
+            let formatter = global.formatter;
+            let message = global._site_message.SUSPENDED;
+            let messageData = {};
+            messageData.date = formatter.today();
+            messageData.comment = comment;
+
+            message = message.format(messageData);
+            SiteMessageDB.setSiteMessage(Trans, submission.user_id, message);
+
+            // Commit transaction and send OK
+            await Trans.commitAsync();
+            res.status(200).send("OK. Journey has progressed (current was suspended)");
+        } catch (e) {
+            // If error, rollback and send ERROR
+            await Trans.rollbackAsync();
+            res.status(500).send(e);
+        }
+    })
+
     router.post('/setnext', isAuthenticated, async (req, res) => {
         let Trans = await MySQL.transaction();
         try {

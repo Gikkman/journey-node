@@ -6,10 +6,11 @@ module.exports = function (MySQL) {
     // Fetch dependancies
     var TokenDatabase = require("../modules/token_database.js")(MySQL);
     var GameDatabases = require("../modules/game_databases.js")(MySQL);
+    var SiteMessageDB = require("../modules/site_message_database.js");
 
     // Fetch handlers
     var submit = require('./api/submit.js')(MySQL, TokenDatabase, GameDatabases);
-    var journey = require('./api/journey.js')(MySQL, GameDatabases);
+    var journey = require('./api/journey.js')(MySQL, GameDatabases, SiteMessageDB);
 
     // Api routes
     router.use('/submit', submit);
