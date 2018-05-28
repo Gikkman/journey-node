@@ -50,7 +50,7 @@ module.exports = function(Passport, MySQL, Config) {
 function findOrCreateTwitch(profile, done, MySQL){
     let verified = profile.email ? 1 : 0;
     let firstLoginQuery = 
-        "SELECT 1 AS first_login WHERE user_id = ? AND access_token = '' ";
+        "SELECT 1 AS first_login FROM users WHERE user_id = ? AND access_token = ''";
     let insertUpdateQuery = 
         'INSERT INTO users'
             + ' (created, last_seen, user_id,'
@@ -61,17 +61,11 @@ function findOrCreateTwitch(profile, done, MySQL){
             + ' last_seen=CURRENT_TIMESTAMP, verified=?,'
             + ' user_name=?, display_name=?,'
             + ' access_token=?, refresh_token=?';
-    MySQL.query(firstLoginQuery, [], (err, result) => {
+    MySQL.query(firstLoginQuery, [profile.id], (err, result) => {
         if(err) {
             done(err);
         } 
         else {
-            if(result.first_login) {
-                console.log('--- First time login detected.'
-                        + ' User: ' + profile.displayName);
-                let message = global._site_message.WELCOME;
-                SiteMessageDatabase.setSiteMessage(MySQL, profile.id, message);
-            }
             MySQL.query(
                 insertUpdateQuery,
                 [profile.id, profile.username, profile.displayName, verified,
@@ -83,6 +77,14 @@ function findOrCreateTwitch(profile, done, MySQL){
                     if(_err)
                         done(_err);
                     else {
+                        // Basically, if the user was created as a result of the insert OR
+                        // if the user existed and hadn't logged in before
+                        if(_result.affectedRows == 1 || (result[0] && result[0].first_login)) {
+                            console.log('--- First time login detected.'
+                                    + ' User: ' + profile.displayName);
+                            let message = global._site_message.WELCOME;
+                            SiteMessageDatabase.setSiteMessage(MySQL, profile.id, message);
+                        }
                         postInsertUpdate(profile, MySQL, done);
                     }
                 }

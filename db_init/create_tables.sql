@@ -149,4 +149,3 @@ CREATE TABLE `user_site_message` (
   PRIMARY KEY (`user_id`),
   CONSTRAINT `fk_user_submit_message_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-SELECT * FROM journey.sessions;
