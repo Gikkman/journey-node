@@ -49,38 +49,46 @@ module.exports = function(Passport, MySQL, Config) {
 
 function findOrCreateTwitch(profile, done, MySQL){
     let verified = profile.email ? 1 : 0;
-    let query = 'INSERT INTO users'
-                + ' (created, last_seen, user_id,'
-                + '  user_name, display_name, verified,'
-                + '  access_token, refresh_token)'
-              + ' VALUES(CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,?,?,?,?,?,?)'
-			  + ' ON DUPLICATE KEY UPDATE'
-                + ' last_seen=CURRENT_TIMESTAMP, verified=?,'
-                + ' user_name=?, display_name=?,'
-                + ' access_token=?, refresh_token=?';
-
-    MySQL.query(
-        query,
-        [profile.id, profile.username, profile.displayName, verified,
-         profile.accessToken, profile.refreshToken,
-
-         verified, profile.username, profile.displayName,
-         profile.accessToken, profile.refreshToken],
-        (err, result) => {
-            if(err)
-                done(err);
-            else {
-                // affectedRows = 1 means this is a user we haven't seen before
-                if(result.affectedRows === 1) {
-                    console.log('--- First time login detected.'
-                            + ' User: ' + profile.displayName);
-                    let message = global._site_message.WELCOME;
-                    SiteMessageDatabase.setSiteMessage(MySQL, profile.id, message);
-                }
-                postInsertUpdate(profile, MySQL, done);
+    let firstLoginQuery = 
+        "SELECT 1 AS first_login WHERE user_id = ? AND access_token = '' ";
+    let insertUpdateQuery = 
+        'INSERT INTO users'
+            + ' (created, last_seen, user_id,'
+            + '  user_name, display_name, verified,'
+            + '  access_token, refresh_token)'
+        + ' VALUES(CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,?,?,?,?,?,?)'
+        + ' ON DUPLICATE KEY UPDATE'
+            + ' last_seen=CURRENT_TIMESTAMP, verified=?,'
+            + ' user_name=?, display_name=?,'
+            + ' access_token=?, refresh_token=?';
+    MySQL.query(firstLoginQuery, [], (err, result) => {
+        if(err) {
+            done(err);
+        } 
+        else {
+            if(result.first_login) {
+                console.log('--- First time login detected.'
+                        + ' User: ' + profile.displayName);
+                let message = global._site_message.WELCOME;
+                SiteMessageDatabase.setSiteMessage(MySQL, profile.id, message);
             }
+            MySQL.query(
+                insertUpdateQuery,
+                [profile.id, profile.username, profile.displayName, verified,
+                 profile.accessToken, profile.refreshToken,
+        
+                 verified, profile.username, profile.displayName,
+                 profile.accessToken, profile.refreshToken],
+                (_err, _result) => {
+                    if(_err)
+                        done(_err);
+                    else {
+                        postInsertUpdate(profile, MySQL, done);
+                    }
+                }
+            );
         }
-    );
+    });
 };
 
 function postInsertUpdate(profile, MySQL, done){
