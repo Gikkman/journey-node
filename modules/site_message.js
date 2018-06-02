@@ -36,7 +36,7 @@ module.exports = () => {
             message:
                 "<p>"
               + "Your quest was completed on {date}, after a playtime of"
-              + " {time} (total playtime {total_time}, played {playtimes} times)!"
+              + " {time} (total {total_time}, played {times_played} times)!"
               + "<p>"
               + "Gikkman gave it a rating of '{rating}'. If you want to check"
               + " out the entire review, please check out the " + QUEST_LOG + "."
@@ -67,7 +67,7 @@ module.exports = () => {
             message: 
                 "<p>"
              + "Your quest was voted out on {date}, after a playtime of {time}"
-             + " (total playtime {total_time}, played {playtimes} times)."
+             + " (total {total_time}, played {times_played} times)."
              + " The vote count ended at {yes_count} Yes vs. {no_count} No."
              + "<p>"
              + "Gikkman gave it a rating of '{rating}'. If you want to check"
@@ -84,7 +84,7 @@ module.exports = () => {
             message: 
                 "<p>"
              + "Your quest was voted out on {date}, after a playtime of {time}"
-             + " (total playtime {total_time}, played {playtimes} times)."
+             + " (total {total_time}, played {times_played} times)."
              + " The vote count ended at {yes_count} Yes vs. {no_count} No."
              + "<p>"
              + "Gikkman gave it a rating of '{rating}'. If you want to check"

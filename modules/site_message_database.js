@@ -1,16 +1,16 @@
 module.exports = function(){
 	var mod = {};
 
-	mod.setSiteMessage = (MySQL, UserID, SiteMessage) => {
+	mod.setSiteMessage = async (MySQL, UserID, SiteMessage, MessageData) => {
         let sql = "INSERT INTO user_site_message (user_id, created, title, message)"
                 + " VALUES (?, CURRENT_TIMESTAMP, ?, ?)"
                 + " ON DUPLICATE KEY UPDATE"
                 + " created=VALUES(created),"
                 + " title=VALUES(title),"
                 + " message=VALUES(message)";
-        MySQL.query(
+        MySQL.queryAsync(
             sql,
-            [UserID, SiteMessage.title, SiteMessage.message],
+            [UserID, SiteMessage.title, SiteMessage.message.format(MessageData)],
             (err) =>  { if(err) console.log(err); }
         );
 	};
