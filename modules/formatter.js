@@ -23,7 +23,7 @@ module.exports = function(){
 
         if(dd<10) dd = '0'+dd
         if(mm<10) mm = '0'+mm
-        today = dd + '-' + mm + '-' + yyyy;
+        return dd + '-' + mm + '-' + yyyy;
     }
 
     return mod;
