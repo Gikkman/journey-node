@@ -137,6 +137,7 @@ CREATE TABLE `user_variables` (
   `gold_current` decimal(10,2) NOT NULL DEFAULT '0.00',
   `gold_lifetime` decimal(10,2) NOT NULL DEFAULT '0.00',
   `losing_streak` int(10) unsigned NOT NULL DEFAULT '0',
+  `site_login` tinyint(4) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`user_id`),
   CONSTRAINT `fk_var_uid` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
