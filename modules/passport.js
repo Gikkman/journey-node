@@ -30,7 +30,7 @@ module.exports = function(Passport, MySQL, Config) {
             clientID: Config.twitch_client_id,
             clientSecret: Config.twitch_client_secret,
             callbackURL: Config.twitch_redir_url,
-            scope: ""
+            scope: "user_read"
         },
 
         /* The profile object has the following fields:
@@ -77,7 +77,8 @@ function findOrCreateTwitch(profile, done, MySQL){
                     } else if( _result.changedRows === 1) {
                         console.log('--- First time login detected.'
                                     + ' User: ' + profile.displayName);
-                        SiteMessageDatabase.setSiteMessage(MySQL, profile.id, global._site_message.WELCOME);
+                        SiteMessageDatabase.setSiteMessage(MySQL, profile.id, global._site_message.WELCOME, {})
+                            .catch( (err) => console.err(err.stack));
                     }
                 });
                 postInsertUpdate(profile, MySQL, done);
