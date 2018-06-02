@@ -4,6 +4,7 @@ const ACTIVE = "`game_active`";
 
 const State = global._state;
 const JOURNEY = "'journey'";
+const SPECIAL = "'special'";
 
 module.exports = function () {
     var obj = {};
@@ -153,13 +154,24 @@ module.exports = function () {
     //-----------------------------------------------------------
     //              ACTIVE
     //-----------------------------------------------------------
+    obj.suspend = async(DB, submission) => {
+        let sql = "INSERT INTO " + ACTIVE + " (submission_id, system, state) "
+            + " VALUES (?, " + JOURNEY + ", ?)";
+        await DB.queryAsync(sql, [submission.submission_id, State.A.suspended]);
+    }
+
+    obj.removeSuspended = async(DB, submission) => {
+        let sql = "DELETE FROM " + ACTIVE + " WHERE submission_id = ? AND state = ?";
+        await DB.queryAsync(sql, [submission.submission_id, State.A.suspended]);
+    }
+
     obj.advanceActives = async (DB) => {
         var sqlDelete = "DELETE FROM " + ACTIVE
             + " WHERE system = " + JOURNEY + " AND state = ?";
         var sqlUpdate = "UPDATE " + ACTIVE + " SET "
-            + " state = ? WHERE system = " + JOURNEY;
+            + " state = ? WHERE system = " + JOURNEY + " AND state = ?";
         let deleteRow = await DB.queryAsync(sqlDelete, [State.A.current]);
-        let updateRow = await DB.queryAsync(sqlUpdate, [State.A.current]);
+        let updateRow = await DB.queryAsync(sqlUpdate, [State.A.current, State.A.next]);
         return { deleted: deleteRow.affectedRows, updated: updateRow.affectedRows};
     };
 

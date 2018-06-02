@@ -17,7 +17,8 @@ module.exports = function(){
         },
         A: {
             current: "current",
-            next: "next"
+            next: "next",
+            suspended: "suspended"
         }
     };
     return state;
