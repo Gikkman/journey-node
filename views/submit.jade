@@ -36,7 +36,7 @@ block content
         #form
             if(!state)
                 +submit-new-quest()
-            else if(state === "Submitted")
+            else if(state === "Submitted" || state === "Suspended")
                 +existing-quest(submission)
             else if(state === "Voted out")
                 +resubmit-quest(submission)

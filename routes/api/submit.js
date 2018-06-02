@@ -139,7 +139,7 @@ async function doAbandon(res, user, payload, GameDatabases, Trans) {
         }
 
         // Active submissions cannot be deleted
-        if (submission.state === State.S.active) {
+        if (submission.state === State.S.active ) {
             errorResponse(res,
                 'Submission deletion failed',
                 'Your submission has not been deleted. This probably occures due to the submission winning'
@@ -161,6 +161,12 @@ async function doAbandon(res, user, payload, GameDatabases, Trans) {
                 GameDatabases.updateQuest(Trans, quest);
                 GameDatabases.deleteSubmission(Trans, submission);
                 outcome = "success";
+            }
+
+            // The quest might've been 'Suspended'. In that case, we gotta clean the 
+            // game_active table too
+            if(submission.state === State.S.suspended) {
+                GameDatabases.removeSuspended(Trans, submission);
             }
 
             successResponse(res,
