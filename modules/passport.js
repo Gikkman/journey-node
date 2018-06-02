@@ -30,7 +30,7 @@ module.exports = function(Passport, MySQL, Config) {
             clientID: Config.twitch_client_id,
             clientSecret: Config.twitch_client_secret,
             callbackURL: Config.twitch_redir_url,
-            scope: "user_read"
+            scope: ""
         },
 
         /* The profile object has the following fields:
@@ -48,7 +48,7 @@ module.exports = function(Passport, MySQL, Config) {
 };
 
 function findOrCreateTwitch(profile, done, MySQL){
-    let verified = profile.email ? 1 : 0;
+    let verified = true;
     let insertUpdateQuery = 
         'INSERT INTO users'
             + ' (created, last_seen, user_id,'
