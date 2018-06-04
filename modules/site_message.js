@@ -13,16 +13,16 @@ module.exports = () => {
             message:
                 "<p>"
               + "This is your first time here, right? Allow me to provide you"
-              + " with a brief introduction o how to submit a quest to the "
+              + " with a brief introduction to how to submit a quest to the "
               + " Journey Project."
               + "<p>"
               + "Before making your first quest submission, please take your time to"
-              + " check our " + SAFE_SYSTEMS + ", to make sure you do not submit a"
+              + " check out our " + SAFE_SYSTEMS + ", to make sure you do not submit a"
               + " quest that we can't play. Also, if you wanna see what"
               + " we've played earlier, check out our " + QUEST_LOG + "."
               + "<p>"
               + "Once you've made a quest submission, it will stay in our raffle pool"
-              + " until you win or manually delete it. Once your quest's"
+              + " until you win or you manually delete it. Once your quest's"
               + " been played, if it wasn't completed, you will have the ability"
               + " to resubmit it (Gikk might also re-submit it himself). If"
               + " it was completed, or you don't want to resubmit it, you may "
@@ -64,7 +64,7 @@ module.exports = () => {
         },
         VOTED_OUT: {
             title: "Quest voted out",
-            message: 
+            message:
                 "<p>"
              + "Your quest was voted out on {date}, after a playtime of {time}"
              + " (total {total_time}, played {times_played} times)."
@@ -81,7 +81,7 @@ module.exports = () => {
         },
         VOTED_OUT_RESUBMITTED: {
             title: "Quest voted out",
-            message: 
+            message:
                 "<p>"
              + "Your quest was voted out on {date}, after a playtime of {time}"
              + " (total {total_time}, played {times_played} times)."
