@@ -49,7 +49,7 @@ module.exports = function(Passport, MySQL, Config) {
 
 function findOrCreateTwitch(profile, done, MySQL){
     let verified = true;
-    let insertUpdateQuery = 
+    let insertUpdateQuery =
         'INSERT INTO users'
             + ' (created, last_seen, user_id,'
             + '  user_name, display_name, verified,'
@@ -75,7 +75,7 @@ function findOrCreateTwitch(profile, done, MySQL){
                     if(_err) {
                         MySQL.logError(_err);
                     } else if( _result.changedRows === 1) {
-                        console.log('--- First time login detected.'
+                        console.log('!!! First time login detected.'
                                     + ' User: ' + profile.displayName);
                         SiteMessageDatabase.setSiteMessage(MySQL, profile.id, global._site_message.WELCOME, {})
                             .catch( (err) => console.err(err.stack));
