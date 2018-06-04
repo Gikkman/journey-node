@@ -9,13 +9,19 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
         let Trans = await MySQL.transaction();
         try {
             // Update the submission stats
-            let submission = await GameDatabases.getCurrentActive(Trans);
-            if(!submission){
-                throw "No submission received when querying for current active";
+            let current = await GameDatabases.getCurrentActive(Trans);
+            if(!current){
+                throw "No 'current' game found. Cannot progress!";
             }
-            let outcome = submission.state;
+            let outcome = current.state;
             if(outcome !== State.S.completed && outcome !== State.S.voted_out && outcome !== State.S.suspended) {
-                throw "Invalid state. Cannot progress unless the current submission is 'completed', 'voted_out' or 'suspended'";
+                throw "Invalid 'current' state. Cannot progress unless it is 'completed', 'voted out' or 'suspended'";
+            }
+
+            // Check that we actually have a Next submission
+            let next = await GameDatabases.getNextActive(Trans);
+            if(!next) {
+                throw "No 'next' game found. Cannot progress!";
             }
 
             // Move the next submission into the current slot
@@ -58,6 +64,7 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
             if(!quest) {
                 throw "No quest received when querying ID " + submission.quest_id;
             }
+
             // Make relevant updates
             submission.state = State.S.completed;
             submission.start_date = submission.start_date || 'NOW()';
@@ -99,10 +106,10 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
             // Required for every outcome
             let submission_id = json.submission_id;
             let rating = json.rating;
-            let resubmit = json.resubmit;
+            let resubmit = !!json.resubmit;
             let yes_count = json.yes_count;
             let no_count = json.no_count;
-            
+
             // Validate the input
             if(!submission_id) {
                 throw "Missing 'submission_id'";
@@ -154,7 +161,7 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
                     submission.quest_id,
                     submission.user_id,
                     submission.comments);
-                    
+
                     quest.state = State.Q.submitted;
                     await GameDatabases.updateQuest(Trans, quest);
             }
@@ -171,8 +178,8 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
                 total_time: formatter.toHhmmss(quest.seconds_played)
             };
 
-            let siteMessage = resubmit ? 
-                global._site_message.VOTED_OUT_RESUBMITTED : 
+            let siteMessage = resubmit ?
+                global._site_message.VOTED_OUT_RESUBMITTED :
                 global._site_message.VOTED_OUT;
             await SiteMessageDB.setSiteMessage(Trans, submission.user_id, siteMessage, messageData);
 
@@ -231,7 +238,7 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
             await Trans.rollbackAsync();
             errorLogAndSend(res, e);
         }
-    })
+    });
 
     router.post('/setnext', isAuthenticated, async (req, res) => {
         let Trans = await MySQL.transaction();
