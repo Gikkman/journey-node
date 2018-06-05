@@ -183,12 +183,12 @@ module.exports = function () {
     };
 
     obj.getNextActive = async (DB) => {
-        var sql = "SELECT a.u*, s.* "
+        var sql = "SELECT a.*, s.* "
                 + " FROM " + ACTIVE + " AS a"
                     + " LEFT JOIN game_submission AS s"
                     + " ON s.uid = a.submission_id"
                 + " WHERE a.system = " + JOURNEY + " AND a.state = ?";
-        let rows = DB.queryAsync(sql, [State.A.next]);
+        let rows = await DB.queryAsync(sql, [State.A.next]);
         return rows[0];
     };
 
