@@ -20,9 +20,6 @@ module.exports = function (MySQL, TokenDatabase, GameDatabases) {
                 let message = row[0].message;
                 successResponse(res, title, message);
             } else {
-                console.log('--- Get Message processed.'
-                    + ' Outcome: no content. '
-                    + 'User: ' + user.display_name);
                 res.send();
             }
         } catch (e) {
@@ -38,9 +35,6 @@ module.exports = function (MySQL, TokenDatabase, GameDatabases) {
         let user = req.user;
         try {
             await MySQL.queryAsync(sql, [user.user_id]);
-            console.log('--- Delete Message processed.'
-                    + ' Outcome: OK. '
-                    + 'User: ' + user.display_name);
             res.sendStatus(200);
         } catch (e) {
             console.log('--- Delete Message.'
