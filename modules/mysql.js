@@ -78,7 +78,7 @@ module.exports = function(Config){
 
     obj.logError = function(error) {
         console.error("SQL error: " + error.code + "\n" + error.sqlMessage + "\n[" + error.sql + "]");
-    }
+    };
 
 	return obj;
 };
