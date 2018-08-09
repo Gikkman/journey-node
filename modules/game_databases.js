@@ -126,8 +126,8 @@ module.exports = function () {
             + " WHERE `s`.`user_id` = ? AND `s`.`deleted` IS NULL";
         let rows = await DB.queryAsync(sql, [userID]);
 
-        if (rows.lenght > 1)
-            throw new Error("Illigal submission state. Too many submission: " + rows.lenght);
+        if (rows.length > 1)
+            throw new Error("Illigal submission state. Too many submission: " + rows.length);
         else
             return rows[0];
     };
@@ -145,8 +145,8 @@ module.exports = function () {
             + " WHERE `s`.`uid` = ? AND `s`.`deleted` IS NULL";
         let rows = await DB.queryAsync(sql, [submissionID]);
 
-        if (rows.lenght > 1)
-            throw new Error("Illigal submission state. Too many submission: " + rows.lenght);
+        if (rows.length > 1)
+            throw new Error("Illigal submission state. Too many submission: " + rows.length);
         else
             return rows[0];
     };
@@ -154,17 +154,7 @@ module.exports = function () {
     //-----------------------------------------------------------
     //              ACTIVE
     //-----------------------------------------------------------
-    obj.suspend = async(DB, submission) => {
-        let sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`) "
-            + " VALUES (?, " + JOURNEY + ", ?)";
-        await DB.queryAsync(sql, [submission.submission_id, State.A.suspended]);
-    };
-
-    obj.removeSuspended = async(DB, submission) => {
-        let sql = "DELETE FROM " + ACTIVE + " WHERE `submission_id` = ? AND `state` = ?";
-        await DB.queryAsync(sql, [submission.submission_id, State.A.suspended]);
-    };
-
+    
     obj.advanceActives = async (DB) => {
         var sqlDelete = "DELETE FROM " + ACTIVE
             + " WHERE `system` = " + JOURNEY + " AND `state` = ?";
@@ -176,9 +166,39 @@ module.exports = function () {
     };
 
     obj.setNextActive = async (DB, submission) => {
-        var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`) "
-            + " VALUES (?," + JOURNEY + ",?)";
-        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.next]);
+        // Calculate index of the next game, by incrementing the current game's index 
+        var indexSQL = "SELECT `index` + 1 as idx FROM " + ACTIVE 
+                + " WHERE `system` = " + JOURNEY + " AND `state` = ?";
+        let res = await DB.queryAsync(indexSQL, [State.A.current]);
+        if(!res || !res[0])
+            throw "Could not calculate next index";
+        let index = res[0].idx;
+        
+        // Insert it 
+        var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`, `index`) "
+            + " VALUES (?," + JOURNEY + ",?, ?)";
+        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.next, index]);
+        return row.affectedRows;
+    };
+    
+    obj.setEncounterActive = async (DB, submission) => {
+        var indexSQL = "SELECT `index` as idx FROM " + ACTIVE 
+                + " WHERE `system` = " + JOURNEY + " AND `state` = ?";
+        let res = await DB.queryAsync(indexSQL, [State.A.current]);
+        if(!res || !res[0])
+            throw "Could not calculate next index";
+        let index = res[0].idx;
+        
+        var subIndexSQL = "SELECT MAX(`subindex`) + 1 as idx FROM " + ACTIVE 
+                + " WHERE `index` = ?";
+        let subRes = await DB.queryAsync(subIndexSQL, [index]);
+        if(!subRes || !subRes[0])
+            throw "Could not calculate next subindex";
+        let subIndex = subRes[0].idx;
+        
+        var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`, `index`, `subindex``) "
+            + " VALUES (?," + JOURNEY + ",?, ?, ?)";
+        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.encounter, index, subIndex]);
         return row.affectedRows;
     };
 
