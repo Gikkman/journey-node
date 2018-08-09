@@ -18,7 +18,7 @@ module.exports = function(){
         A: {
             current: "current",
             next: "next",
-            suspended: "suspended"
+            encounter: "encounter"
         }
     };
     return state;
