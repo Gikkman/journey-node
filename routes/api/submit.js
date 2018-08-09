@@ -129,7 +129,7 @@ async function doAbandon(res, user, payload, GameDatabases, Trans) {
                 "Could not find a submission to abandon. " +
                 "Please contact me."
             );
-            return "fail - no submission found"
+            return "fail - no submission found";
         }
 
         // Active submissions cannot be deleted
@@ -185,7 +185,7 @@ async function doConfirm(res, user, payload, GameDatabases, Trans) {
                 "Could not find a submission to confirm for. " +
                 "Please contact me."
             );
-            return "fail - no submission found"
+            return "fail - no submission found";
         }
 
         // Can only confirm a completed submission
@@ -253,7 +253,7 @@ async function doResubmit(res, user, payload, GameDatabases, Trans) {
                 "Could not find a submission to resubmit. " +
                 "Please contact me."
             );
-            return "fail - no submission found"
+            return "fail - no submission found";
         }
 
         // You may only resubmit a game that is voted out
