@@ -163,7 +163,6 @@ module.exports = function () {
                                 + " WHERE gs.state <> ?"
                                 + ") a1"
                         + " )";
-                    console.log(sqlDelete);
         let deleteRow = await DB.queryAsync(sqlDelete, [State.S.active]);
         return { deleted: deleteRow.affectedRows, updated: 0};
     };

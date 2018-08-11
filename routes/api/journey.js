@@ -217,6 +217,10 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
         }
     });
     
+    //*******************************************************
+    //      Ender - Helpers
+    //*******************************************************
+    
     async function getAndVerifySubmission(Trans, submissionID) {
         let submission = await GameDatabases.getSubmissionBySubmissionID(Trans, submissionID);
         if (!submission)
@@ -256,7 +260,7 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
         let Trans = await MySQL.transaction();
         try {
             let json = req.body;
-            let nextSubmissionID = json.next;
+            let nextSubmissionID = json.submission_id;
             if (!nextSubmissionID)
                 throw "Body missing 'next'";
 
@@ -305,7 +309,7 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
         let Trans = await MySQL.transaction();
         try {
             let json = req.body;
-            let submissionID = json.next;
+            let submissionID = json.submission_id;
             if (!submissionID)
                 throw "Body missing 'next'";
 
@@ -383,7 +387,7 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
             // Counters for keeping track of how many updates occured
             let subCount = 0;
             let questCount = 0;
-            let voteTimerCount = 0;
+            let voteTimerCount = null;
 
             // Perform submission and quest updates
             // This will only affect the fields labeled as "allowed for updated"

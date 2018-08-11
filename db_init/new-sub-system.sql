@@ -16,7 +16,7 @@ UPDATE journey.game_active SET `index` = (SELECT MAX(`index`) FROM gamesplayed) 
 
 ALTER TABLE `journey`.`gamesplayed` 
 ADD COLUMN `subindex` INT(10) UNSIGNED NOT NULL DEFAULT 0 AFTER `sub_index`;
-ADD COLUMN `vote_timer` INT(10) UNSIGNED NOT NULL DEFAULT 0 AFTER `subindex`;
+ADD COLUMN `vote_timer` INT(10) UNSIGNED NULL AFTER `subindex`;
 
 UPDATE gamesplayed SET subindex = 1 WHERE sub_index = "B" AND `uid` > 1;
 
