@@ -153,74 +153,114 @@ module.exports = function () {
 
     //-----------------------------------------------------------
     //              ACTIVE
-    //-----------------------------------------------------------
-    
+    //-----------------------------------------------------------    
     obj.advanceActives = async (DB) => {
-        var sqlDelete = "DELETE FROM " + ACTIVE
-            + " WHERE `system` = " + JOURNEY + " AND `state` = ?";
-        var sqlUpdate = "UPDATE " + ACTIVE + " SET "
-            + " `state` = ? WHERE `system` = " + JOURNEY + " AND `state` = ?";
-        let deleteRow = await DB.queryAsync(sqlDelete, [State.A.current]);
-        let updateRow = await DB.queryAsync(sqlUpdate, [State.A.current, State.A.next]);
-        return { deleted: deleteRow.affectedRows, updated: updateRow.affectedRows};
+        let sqlDelete = "DELETE FROM " + ACTIVE + " WHERE `submission_id` IN"
+                        + " ( SELECT `submission_id` FROM"
+                            + " (SELECT ga.`submission_id` FROM `game_active` ga"
+                                + " JOIN `game_submission` gs"
+                                + " ON ga.submission_id = gs.uid"
+                                + " WHERE gs.state <> ?"
+                                + ") a1"
+                        + " )";
+                    console.log(sqlDelete);
+        let deleteRow = await DB.queryAsync(sqlDelete, [State.S.active]);
+        return { deleted: deleteRow.affectedRows, updated: 0};
+    };
+    
+    obj.deleteSubmissionIfEncounter = async (DB, submission) => {
+        if(submission.active_state === State.A.encounter) {
+            let sql = "DELTE FROM " + ACTIVE + " WHERE `submission_id` = ?";
+            await DB.queryAsync(sql, [submission.submission_id]);            
+            return true;
+        }
+        return false;
     };
 
     obj.setNextActive = async (DB, submission) => {
-        // Calculate index of the next game, by incrementing the current game's index 
-        var indexSQL = "SELECT `index` + 1 as idx FROM " + ACTIVE 
-                + " WHERE `system` = " + JOURNEY + " AND `state` = ?";
-        let res = await DB.queryAsync(indexSQL, [State.A.current]);
-        if(!res || !res[0])
-            throw "Could not calculate next index";
-        let index = res[0].idx;
+        const VOTE_TIMER = global._config.vote_time_init;
         
-        // Insert it 
-        var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`, `index`) "
-            + " VALUES (?," + JOURNEY + ",?, ?)";
-        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.next, index]);
+        let index = await getCurrentIndex(DB);
+        index++;
+        
+        var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`, `index`, `vote_timer`) "
+            + " VALUES (?," + JOURNEY + ", ?, ?, ?)";
+        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.active, index, VOTE_TIMER]);
+        return row.affectedRows;
+    };
+    
+    obj.setSubindexActive = async (DB, submission) => {
+        const VOTE_TIMER = global._config.vote_time_init;
+        
+        let i = await getNextSubIndex(DB);     
+        var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`, `index`, `subindex`, `vote_timer`) "
+            + " VALUES (?," + JOURNEY + ",?, ?, ?, ?)";
+        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.active, i.index, i.subIndex, VOTE_TIMER]);
         return row.affectedRows;
     };
     
     obj.setEncounterActive = async (DB, submission) => {
-        var indexSQL = "SELECT `index` as idx FROM " + ACTIVE 
-                + " WHERE `system` = " + JOURNEY + " AND `state` = ?";
-        let res = await DB.queryAsync(indexSQL, [State.A.current]);
-        if(!res || !res[0])
-            throw "Could not calculate next index";
-        let index = res[0].idx;
-        
-        var subIndexSQL = "SELECT MAX(`subindex`) + 1 as idx FROM " + ACTIVE 
-                + " WHERE `index` = ?";
-        let subRes = await DB.queryAsync(subIndexSQL, [index]);
-        if(!subRes || !subRes[0])
-            throw "Could not calculate next subindex";
-        let subIndex = subRes[0].idx;
-        
-        var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`, `index`, `subindex``) "
+        let i = await getNextSubIndex(DB);     
+        var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`, `index`, `subindex`) "
             + " VALUES (?," + JOURNEY + ",?, ?, ?)";
-        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.encounter, index, subIndex]);
+        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.encounter, i.index, i.subIndex]);
         return row.affectedRows;
     };
 
     obj.getNextActive = async (DB) => {
-        var sql = "SELECT `a`.*, `s`.* "
+        let index = await getCurrentIndex(DB);
+        index++;
+        let sql = "SELECT `a`.*, `s`.* "
                 + " FROM " + ACTIVE + " AS a"
                     + " LEFT JOIN `game_submission` AS `s`"
                     + " ON `s`.`uid` = `a`.`submission_id`"
-                + " WHERE `a`.`system` = " + JOURNEY + " AND `a`.`state` = ?";
-        let rows = await DB.queryAsync(sql, [State.A.next]);
+                + " WHERE `a`.`system` = " + JOURNEY + " AND `a`.`index` = ?";
+        let rows = await DB.queryAsync(sql, [index]);
         return rows[0];
     };
 
     obj.getCurrentActive = async (DB) => {
-        var sql = "SELECT `a`.*, `s`.* "
-                + " FROM " + ACTIVE + " AS `a`"
+        let index = await getCurrentIndex(DB);        
+        let sql = "SELECT `a`.*, `s`.* "
+                + " FROM " + ACTIVE + " AS a"
                     + " LEFT JOIN `game_submission` AS `s`"
                     + " ON `s`.`uid` = `a`.`submission_id`"
-                + " WHERE `a`.`system` = " + JOURNEY + " AND `a`.`state` = ?";
-        let rows = await DB.queryAsync(sql, [State.A.current]);
+                + " WHERE `a`.`system` = " + JOURNEY + " AND `a`.`index` = ?";
+        let rows = await DB.queryAsync(sql, [index]);
         return rows[0];
+    };
+    
+    obj.updateVoteTimer = async (DB, submission, vote_timer) => {
+        let sql = "UPDATE " + ACTIVE + " SET `vote_timer` = ? WHERE `submission_id` = ?";
+        let rows = await DB.queryAsync(sql, [vote_timer, submission.submission_id]);
+        return rows.affectedRows;
     };
 
     return obj;
 };
+
+async function getCurrentIndex(DB) {
+    var indexSQL = "SELECT min(`index`) as idx FROM " + ACTIVE 
+                + " WHERE `subindex` = 0";
+    let res = await DB.queryAsync(indexSQL);
+    if(!res || !res[0])
+        throw "Could not calculate current index";
+    let index = res[0].idx;
+    
+    return index;
+}
+
+async function getNextSubIndex(DB) {
+    let index = await getCurrentIndex(DB);
+    var subIndexSQL = "SELECT MAX(`subindex`) + 1 as idx FROM " + ACTIVE 
+                    + " WHERE `index` = ?"
+                    + " UNION"
+                    + " SELECT MAX(`subindex`) + 1 as idx FROM `gamesplayed`"
+                    + " WHERE `index` = ?";
+    let subRes = await DB.queryAsync(subIndexSQL, [index, index]);
+    if(!subRes || !subRes[0])
+        throw "Could not calculate next subindex";
+    let subIndex = Math.max(subRes[0].idx, subRes[1].idx);
+    
+    return { index:index, subIndex:subIndex };
+}
