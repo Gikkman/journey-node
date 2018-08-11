@@ -60,24 +60,27 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
             }
 
             // Fetch submission and quest
-            let submission = getAndVerifySubmission(Trans, submission_id);
-            let quest = getAndVerifyQuest(Trans, submission);
+            let submission = await getAndVerifySubmission(Trans, submission_id);
+            let quest = await getAndVerifyQuest(Trans, submission);
 
             // Make relevant updates
-            updateSubmissionAndQuest(Trans, submission, State.S.completed, quest, State.Q.completed);
-
-            // Set site message
-            let formatter = global.formatter;
-            let messageData = {
-                rating: rating,
-                times_played:  quest.times_played,
-                date: formatter.today(),
-                time: formatter.toHhmmss(submission.seconds_played),
-                total_time: formatter.toHhmmss(quest.seconds_played)
-            };
+            await updateSubmissionAndQuest(Trans, submission, State.S.completed, quest, State.Q.completed);
+            let encounter = await GameDatabases.deleteSubmissionIfEncounter(Trans, submission);
             
-            let siteMessage = global._site_message.COMPLETED;
-            await SiteMessageDB.setSiteMessage(Trans, submission.user_id, siteMessage, messageData);
+            if(!encounter) {
+                // Set site message
+                let formatter = global.formatter;
+                let messageData = {
+                    rating: rating,
+                    times_played:  quest.times_played,
+                    date: formatter.today(),
+                    time: formatter.toHhmmss(submission.seconds_played),
+                    total_time: formatter.toHhmmss(quest.seconds_played)
+                };
+
+                let siteMessage = global._site_message.COMPLETED;
+                await SiteMessageDB.setSiteMessage(Trans, submission.user_id, siteMessage, messageData);
+            }
 
             // Commit transaction and send OK
             await Trans.commitAsync();
@@ -119,43 +122,46 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
             }
 
             // Fetch submission and quest
-            let submission = getAndVerifySubmission(Trans, submission_id);
-            let quest = getAndVerifyQuest(Trans, submission);
+            let submission = await getAndVerifySubmission(Trans, submission_id);
+            let quest = await getAndVerifyQuest(Trans, submission);
 
             // Make relevant updates
-            updateSubmissionAndQuest(Trans, submission, State.S.voted_out, quest, State.Q.voted_out);
+            await updateSubmissionAndQuest(Trans, submission, State.S.voted_out, quest, State.Q.voted_out);
+            let encounter = await GameDatabases.deleteSubmissionIfEncounter(Trans, submission);
 
-            // If a submission should be resubmitted, we delete the old
-            // submission and create a new one, pointing to the same quest.
-            // If a submission should not be resubmitted, we do not delete it
-            // since the user will delete it themselves when they click "Confirm"
-            if(resubmit){
-                await GameDatabases.deleteSubmission(Trans, submission);
-                await GameDatabases.createSubmission(Trans,
-                    submission.quest_id,
-                    submission.user_id,
-                    submission.comments);
+            if(!encounter) {
+                // If a submission should be resubmitted, we delete the old
+                // submission and create a new one, pointing to the same quest.
+                // If a submission should not be resubmitted, we do not delete it
+                // since the user will delete it themselves when they click "Confirm"
+                if(resubmit){
+                    await GameDatabases.deleteSubmission(Trans, submission);
+                    await GameDatabases.createSubmission(Trans,
+                        submission.quest_id,
+                        submission.user_id,
+                        submission.comments);
 
-                    quest.state = State.Q.submitted;
-                    await GameDatabases.updateQuest(Trans, quest);
+                        quest.state = State.Q.submitted;
+                        await GameDatabases.updateQuest(Trans, quest);
+                }
+
+                // Set site message
+                let formatter = global.formatter;
+                let messageData = {
+                    rating: rating,
+                    times_played:  quest.times_played,
+                    date: formatter.today(),
+                    yes_count: yes_count,
+                    no_count: no_count,
+                    time: formatter.toHhmmss(submission.seconds_played),
+                    total_time: formatter.toHhmmss(quest.seconds_played)
+                };
+
+                let siteMessage = resubmit ?
+                    global._site_message.VOTED_OUT_RESUBMITTED :
+                    global._site_message.VOTED_OUT;
+                await SiteMessageDB.setSiteMessage(Trans, submission.user_id, siteMessage, messageData);
             }
-
-            // Set site message
-            let formatter = global.formatter;
-            let messageData = {
-                rating: rating,
-                times_played:  quest.times_played,
-                date: formatter.today(),
-                yes_count: yes_count,
-                no_count: no_count,
-                time: formatter.toHhmmss(submission.seconds_played),
-                total_time: formatter.toHhmmss(quest.seconds_played)
-            };
-
-            let siteMessage = resubmit ?
-                global._site_message.VOTED_OUT_RESUBMITTED :
-                global._site_message.VOTED_OUT;
-            await SiteMessageDB.setSiteMessage(Trans, submission.user_id, siteMessage, messageData);
 
             // Commit transaction and send OK
             await Trans.commitAsync();
@@ -178,11 +184,11 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
                 throw "Missing 'comment'";
             }
             
-            let nextSubmissionID = json.next;
-            if (!nextSubmissionID)
-                throw "Body missing 'next'";
+            let submissionID = json.submission_id;
+            if (!submissionID)
+                throw "Body missing 'submission_id'";
 
-            let submission = getAndVerifySubmission(Trans, nextSubmissionID);
+            let submission = await getAndVerifySubmission(Trans, submissionID);
             
             submission.state = State.S.suspended;
             await GameDatabases.updateSubmission(Trans, submission);
@@ -259,7 +265,7 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
             if (!submission)
                 throw "Submission " + nextSubmissionID + " does not exist";
 
-            // Check that the submission is not already active
+            // Check that the submission is in the correct state
             if(submission.state !== State.S.submitted)
                 throw "Submission " + nextSubmissionID + " is in state " + submission.state 
                     + ". Has to be in state " + State.S.submitted;
@@ -295,13 +301,13 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
         }
     });
     
-    router.post('/setencounter', isAuthenticated, async (req, res) => {
+    router.post('/setnext/suspended', isAuthenticated, async (req, res) => {
         let Trans = await MySQL.transaction();
         try {
             let json = req.body;
             let submissionID = json.next;
             if (!submissionID)
-                throw "Body missing 'submission_id'";
+                throw "Body missing 'next'";
 
             // Check that the submission exists as it should
             let submission = await GameDatabases.getSubmissionBySubmissionID(Trans, submissionID);
@@ -316,10 +322,10 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
             if(submission.deleted)
                 throw "Submission " + submissionID + " has been deleted";
 
-            // Queue the submission as NEXT
-            let affected = await GameDatabases.setEncounterActive(Trans, submission);
+            // Set the submission as a subindex
+            let affected = await GameDatabases.setSubindexActive(Trans, submission);
             if (affected === 0)
-                throw "Error inserting submission as 'next'";
+                throw "Error inserting submission as 'subindex'";
 
             // Update the submission state
             submission.state = State.S.active;
@@ -334,13 +340,21 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
 
             // Commit transaction and send OK
             await Trans.commitAsync();
-            res.status(200).send("OK. Next game set");
+            res.status(200).send("OK. Next subindex game set");
 
         } catch (e) {
             // If error, rollback and send ERROR
             await Trans.rollbackAsync();
             errorLogAndSend(res, e);
         }
+    });
+    
+    router.post('/setencounter/fresh', isAuthenticated, async (req, res) => {
+        
+    });
+    
+    router.post('/setencounter/abandoned', isAuthenticated, async (req, res) => {
+        
     });
     
     //=======================================================
@@ -364,22 +378,29 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
             let json = req.body;
             let submission = json.submission;
             let quest = json.quest;
+            let vote_timer = json.vote_timer;
 
             // Counters for keeping track of how many updates occured
             let subCount = 0;
             let questCount = 0;
+            let voteTimerCount = 0;
 
             // Perform submission and quest updates
             // This will only affect the fields labeled as "allowed for updated"
-            if(submission)
+            if(submission) {
                 subCount = await GameDatabases.updateSubmission(Trans, submission);
-            if(quest)
+                if(vote_timer)
+                    voteTimerCount = await GameDatabases.updateVoteTimer(Trans, submission, vote_timer);
+            }
+            if(quest) {
                 questCount = await GameDatabases.updateQuest(Trans, quest, true);
+            }
 
             // Commit transaction and send OK
             await Trans.commitAsync();
             res.status(200).send("OK. Submission updated: " + !!subCount
-                               + " Quest updated: " + !!questCount);
+                               + " Quest updated: " + !!questCount
+                               + " Vote Timer updated: " + !!voteTimerCount);
         } catch (e) {
             // If error, rollback and send ERROR
             await Trans.rollbackAsync();
