@@ -11,10 +11,12 @@ module.exports = function (MySQL) {
     // Fetch handlers
     var submit = require('./api/submit.js')(MySQL, TokenDatabase, GameDatabases);
     var journey = require('./api/journey.js')(MySQL, GameDatabases, SiteMessageDB);
+    var query = require('./api/query.js')(MySQL, GameDatabases);
 
     // Api routes
     router.use('/submit', submit);
     router.use('/journey', journey);
+    router.use('/query', query);
 
     router.get('/', (req, res) => {
        res.status(200).send("Hello");

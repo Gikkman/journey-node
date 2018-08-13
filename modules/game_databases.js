@@ -27,7 +27,7 @@ module.exports = function () {
     };
 
     const questModifiableFieldsLimited = ['title', 'system', 'goal'];
-    const questModifiableFields = ['title', 'system', 'goal','state', 'seconds_played', 'times_played' ];
+    const questModifiableFields = ['title', 'system', 'goal', 'state', 'seconds_played', 'times_played' ];
     obj.updateQuest = async (DB, quest, limited) => {
         if(!quest.quest_id){
             return 'Missing quest ID';
@@ -209,10 +209,7 @@ module.exports = function () {
     obj.getNextActive = async (DB) => {
         let index = await getCurrentIndex(DB);
         index++;
-        let sql = "SELECT `a`.*, `s`.* "
-                + " FROM " + ACTIVE + " AS a"
-                    + " LEFT JOIN `game_submission` AS `s`"
-                    + " ON `s`.`uid` = `a`.`submission_id`"
+        let sql = FULL_GAME_SQL
                 + " WHERE `a`.`system` = " + JOURNEY + " AND `a`.`index` = ?";
         let rows = await DB.queryAsync(sql, [index]);
         return rows[0];
@@ -220,13 +217,16 @@ module.exports = function () {
 
     obj.getCurrentActive = async (DB) => {
         let index = await getCurrentIndex(DB);        
-        let sql = "SELECT `a`.*, `s`.* "
-                + " FROM " + ACTIVE + " AS a"
-                    + " LEFT JOIN `game_submission` AS `s`"
-                    + " ON `s`.`uid` = `a`.`submission_id`"
+        let sql = FULL_GAME_SQL
                 + " WHERE `a`.`system` = " + JOURNEY + " AND `a`.`index` = ?";
         let rows = await DB.queryAsync(sql, [index]);
         return rows[0];
+    };
+    
+    obj.getSubindexActive = async (DB) => {
+        let sql = FULL_GAME_SQL
+                + " WHERE `a`.`system` = " + JOURNEY + " AND `a`.`subindex` != 0 AND `s`.`user_id` != ?";
+        return DB.queryAsync(sql, [global.ADMIN_ID]);
     };
     
     obj.updateVoteTimer = async (DB, submission, vote_timer) => {
@@ -263,3 +263,20 @@ async function getNextSubIndex(DB) {
     
     return { index:index, subIndex:subIndex };
 }
+
+const FULL_GAME_SQL = "SELECT `a`.*, `s`.*,"
+                + " `q`.`title`, `q`.`system`, `q`.`goal`, "
+                + " `q`.`seconds_played` + `s`.`seconds_played` AS total_seconds_played,"
+                + " `q`.`times_played`,"
+                    + " IF(`s`.`dn_override` IS NOT NULL AND `s`.`dn_override` <> '',"
+                    + "`s`.`dn_override`, `u`.`display_name`) AS display_name"
+                + " FROM " + ACTIVE + " AS a"
+                    
+                    + " LEFT JOIN `game_submission` AS `s`"
+                    + " ON `s`.`uid` = `a`.`submission_id`"
+                    
+                    + " LEFT JOIN `game_quest` AS `q`"
+                    + " ON `q`.`uid` = `s`.`quest_id`"
+            
+                    + " LEFT JOIN `users` AS `u`"
+                    + " ON `u`.`user_id` = `s`.`user_id`";

@@ -414,7 +414,7 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
 
     router.get('/ping', isAuthenticated, async (req, res) => {
        try {
-            res.status(200).send("OK");
+            res.status(200).send("OK - Journey");
        } catch (e) {
             errorLogAndSend(res, e);
        }
