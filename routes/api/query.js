@@ -23,6 +23,32 @@ module.exports = function (MySQL, GameDatabases) {
         }
     });
     
+    router.get('/allsubmissions', isAuthenticated, async (req, res) => {
+        try {
+            let allSubmissions = await GameDatabases.getAllSubmissions(MySQL);
+            
+            cleanSubmission(allSubmissions);
+            
+            res.status(200).json( {
+                all: allSubmissions
+            });
+        } catch (e) {
+            errorLogAndSend(res, e);
+        }
+    });
+    
+    router.get('/totaltime', isAuthenticated, async (req, res) => {
+        try {
+            let time = await GameDatabases.getTotalTime(MySQL);
+            
+            res.status(200).json( {
+                total_time_seconds: time
+            });
+        } catch (e) {
+            errorLogAndSend(res, e);
+        }
+    });
+    
     //=======================================================
     //==    Misc endpoints
     //=======================================================
@@ -53,15 +79,13 @@ module.exports = function (MySQL, GameDatabases) {
         res.status(500).send(error instanceof Error ? error.message : error);
     }
     
-    function cleanSubmission(s1, s2, sx) {
-        let s = [].concat([s1], [s2], sx);
+    function cleanSubmission(...sx) {
+        let s = sx.reduce((acc, val) => acc.concat(val), []);
         for(let sub of s) {
             if(!sub) continue;
             delete sub.created;
             delete sub.updated;
             delete sub.deleted;
-            delete sub.end_date;
-            delete sub.uid;
             
             let index = sub.index;
             let subindex = sub.subindex;

@@ -228,6 +228,26 @@ module.exports = function () {
         let rows = await DB.queryAsync(sql, [vote_timer, submission.submission_id]);
         return rows.affectedRows;
     };
+    
+    
+    //-----------------------------------------------------------
+    //              CROSS - QUERIES 
+    //-----------------------------------------------------------  
+    
+    obj.getAllSubmissions = async(DB) => {
+        let sql = FULL_GAME_SQL + " WHERE `s`.`state` = ? AND `s`.`deleted` IS NULL";
+        console.log(sql);
+        return await DB.queryAsync(sql, [State.S.submitted]);
+    };
+    
+    obj.getTotalTime = async(DB) => {
+        let sqlGP = "SELECT sum(`seconds_played`) AS `time` FROM gamesplayed";
+        let rowGP = await DB.queryAsync(sqlGP, []);
+        let sqlGA = "SELECT sum(`seconds_played`) AS `time` FROM " + ACTIVE + " AS a"
+                    + " JOIN " + SUBMISSONS + " AS s ON a.submission_id = s.uid";
+        let rowGA = await DB.queryAsync(sqlGA, []);
+        return rowGP[0].time + rowGA[0].time;
+    };
 
     return obj;
 };
@@ -258,19 +278,29 @@ async function getNextSubIndex(DB) {
     return { index:index, subIndex:subIndex };
 }
 
-const FULL_GAME_SQL = "SELECT `a`.*, `s`.*,"
-                + " `q`.`title`, `q`.`system`, `q`.`goal`, "
-                + " `q`.`seconds_played` + `s`.`seconds_played` AS total_seconds_played,"
-                + " `q`.`times_played`,"
-                    + " IF(`s`.`dn_override` IS NOT NULL AND `s`.`dn_override` <> '',"
-                    + "`s`.`dn_override`, `u`.`display_name`) AS display_name"
-                + " FROM " + ACTIVE + " AS a"
-                    
-                    + " LEFT JOIN `game_submission` AS `s`"
-                    + " ON `s`.`uid` = `a`.`submission_id`"
-                    
-                    + " LEFT JOIN `game_quest` AS `q`"
-                    + " ON `q`.`uid` = `s`.`quest_id`"
-            
-                    + " LEFT JOIN `users` AS `u`"
-                    + " ON `u`.`user_id` = `s`.`user_id`";
+const FULL_GAME_SQL = 
+"SELECT `s`.`uid` AS `submission_id`, "
+    + " `s`.`quest_id`,"
+    + " `s`.`user_id`,"
+    + " `s`.`created`,"
+    + " `s`.`updated`,"
+    + " `s`.`deleted`,"
+    + " `s`.`comments`,"
+    + " `s`.`state`,"
+    + " `s`.`seconds_played`,"
+    + " `s`.`start_date`,"
+    + " `s`.`end_date`,"
+    + " IF(`s`.`dn_override` IS NOT NULL AND `s`.`dn_override` <> '',`s`.`dn_override`, `u`.`display_name`) AS `display_name`,"
+	+ " `a`.`state` AS `active_state`, "
+	+ " `a`.`vote_timer`,"
+    + " `a`.`index`,"
+    + " `a`.`subindex`,"
+    + " `q`.`title`, "
+    + " `q`.`system`,"
+    + " `q`.`goal`,"
+    + " `q`.`seconds_played` + `s`.`seconds_played` AS total_seconds_played,"
+    + " `q`.`times_played`"
++ " FROM `game_submission` AS `s`"
+	+ " LEFT JOIN `game_active` AS `a` ON `s`.`uid` = `a`.`submission_id`"
+    + " LEFT JOIN `game_quest` AS `q` ON `q`.`uid` = `s`.`quest_id`"
+    + " LEFT JOIN `users` AS `u` ON `u`.`user_id` = `s`.`user_id`";
