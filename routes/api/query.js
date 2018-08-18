@@ -54,7 +54,7 @@ module.exports = function (MySQL, GameDatabases) {
     }
     
     function cleanSubmission(s1, s2, sx) {
-        let s = [].concat.apply([s1], [s2], sx);
+        let s = [].concat([s1], [s2], sx);
         for(let sub of s) {
             if(!sub) continue;
             delete sub.created;
@@ -71,8 +71,9 @@ module.exports = function (MySQL, GameDatabases) {
     }
 };
 
-const A = ['', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
-           'P', 'Q','R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+const A = ['', '-B', '-C', '-D', '-E', '-F', '-G', '-H', '-I', '-J', '-K', 
+           '-L', 'M', '-N', '-O', '-P', '-Q','-R', '-S', '-T', '-U', '-V', 
+           '-W', '-X', '-Y', '-Z'];
 function subindexToString(subindex) {
     return A[subindex];
 }

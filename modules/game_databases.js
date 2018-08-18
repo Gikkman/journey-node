@@ -68,11 +68,11 @@ module.exports = function () {
         return submissionsAllowed;
     };
 
-    obj.createSubmission = async (DB, questID, userID, comments) => {
+    obj.createSubmission = async (DB, questID, userID, comments, state = State.S.submitted) => {
         var sql = "INSERT INTO " + SUBMISSONS
             + " (`quest_id`, `user_id`, `comments`, `created`, `updated`, `state`)"
             + " VALUES (?,?,?, NOW(), NOW(), ?)";
-        let data = await DB.queryAsync(sql, [questID, userID, comments, State.S.submitted]);
+        let data = await DB.queryAsync(sql, [questID, userID, comments, state]);
         return data.insertId;
     };
 
@@ -155,16 +155,13 @@ module.exports = function () {
     //              ACTIVE
     //-----------------------------------------------------------    
     obj.advanceActives = async (DB) => {
-        let sqlDelete = "DELETE FROM " + ACTIVE + " WHERE `submission_id` IN"
-                        + " ( SELECT `submission_id` FROM"
-                            + " (SELECT ga.`submission_id` FROM `game_active` ga"
-                                + " JOIN `game_submission` gs"
-                                + " ON ga.submission_id = gs.uid"
-                                + " WHERE gs.state <> ?"
-                                + ") a1"
-                        + " )";
-        let deleteRow = await DB.queryAsync(sqlDelete, [State.S.active]);
-        return { deleted: deleteRow.affectedRows, updated: 0};
+        var sqlDelete = "DELETE FROM " + ACTIVE
+            + " WHERE `system` = " + JOURNEY + " AND `state` = ?";
+        var sqlUpdate = "UPDATE " + ACTIVE + " SET "
+            + " `state` = ? WHERE `system` = " + JOURNEY + " AND `state` = ?";
+        let deleteRow = await DB.queryAsync(sqlDelete, [State.A.current]);
+        let updateRow = await DB.queryAsync(sqlUpdate, [State.A.current, State.A.next]);
+        return { deleted: deleteRow.affectedRows, updated: updateRow.affectedRows};
     };
     
     obj.deleteSubmissionIfEncounter = async (DB, submission) => {
@@ -184,7 +181,7 @@ module.exports = function () {
         
         var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`, `index`, `vote_timer`) "
             + " VALUES (?," + JOURNEY + ", ?, ?, ?)";
-        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.active, index, VOTE_TIMER]);
+        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.next, index, VOTE_TIMER]);
         return row.affectedRows;
     };
     
@@ -194,7 +191,7 @@ module.exports = function () {
         let i = await getNextSubIndex(DB);     
         var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`, `index`, `subindex`, `vote_timer`) "
             + " VALUES (?," + JOURNEY + ",?, ?, ?, ?)";
-        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.active, i.index, i.subIndex, VOTE_TIMER]);
+        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.subindex, i.index, i.subIndex, VOTE_TIMER]);
         return row.affectedRows;
     };
     
@@ -207,26 +204,23 @@ module.exports = function () {
     };
 
     obj.getNextActive = async (DB) => {
-        let index = await getCurrentIndex(DB);
-        index++;
         let sql = FULL_GAME_SQL
-                + " WHERE `a`.`system` = " + JOURNEY + " AND `a`.`index` = ?";
-        let rows = await DB.queryAsync(sql, [index]);
+                + " WHERE `a`.`system` = " + JOURNEY + " AND `a`.`state` = ?";
+        let rows = await DB.queryAsync(sql, [State.A.next]);
         return rows[0];
     };
 
-    obj.getCurrentActive = async (DB) => {
-        let index = await getCurrentIndex(DB);        
+    obj.getCurrentActive = async (DB) => {       
         let sql = FULL_GAME_SQL
-                + " WHERE `a`.`system` = " + JOURNEY + " AND `a`.`index` = ?";
-        let rows = await DB.queryAsync(sql, [index]);
+                + " WHERE `a`.`system` = " + JOURNEY + " AND `a`.`state` = ?";
+        let rows = await DB.queryAsync(sql, [State.A.current]);
         return rows[0];
     };
     
     obj.getSubindexActive = async (DB) => {
         let sql = FULL_GAME_SQL
-                + " WHERE `a`.`system` = " + JOURNEY + " AND `a`.`subindex` != 0 AND `s`.`user_id` != ?";
-        return DB.queryAsync(sql, [global.ADMIN_ID]);
+                + " WHERE `a`.`system` = " + JOURNEY + " AND `a`.`state` = ? AND `s`.`state` = ?";
+        return DB.queryAsync(sql, [State.A.subindex, State.S.active]);
     };
     
     obj.updateVoteTimer = async (DB, submission, vote_timer) => {

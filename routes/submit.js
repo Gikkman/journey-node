@@ -31,9 +31,7 @@ module.exports = function (MySQL, TokenDatabase, GameDatabases) {
                 submission.state = temp;
 
                 if(submission.active_state){
-                    let temp = submission.active_state;
-                    temp = temp.charAt(0).toUpperCase() + temp.slice(1);
-                    submission.active_state = temp;
+                    submission.active_state = "Active Game";
                 }
 
                 // For the view

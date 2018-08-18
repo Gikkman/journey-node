@@ -184,28 +184,44 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
                 throw "Missing 'comment'";
             }
             
-            let submissionID = json.submission_id;
-            if (!submissionID)
+            let submission_id = json.submission_id;
+            if (!submission_id)
                 throw "Body missing 'submission_id'";
 
-            let submission = await getAndVerifySubmission(Trans, submissionID);
+             // Fetch submission and quest
+            let submission = await getAndVerifySubmission(Trans, submission_id);
+            let quest = await getAndVerifyQuest(Trans, submission);
+
+            // Make relevant updates
+            await updateSubmissionAndQuest(Trans, submission, State.S.suspended, quest, State.Q.suspended);
+            let encounter = await GameDatabases.deleteSubmissionIfEncounter(Trans, submission);
             
-            submission.state = State.S.suspended;
-            await GameDatabases.updateSubmission(Trans, submission);
+            if(!encounter) {
+                // We remove the original submission, and create a new one.
+                // This will allos us to keep a propper record, so that the
+                // original suspended submission record is retained, but we
+                // have a new submission which the user may opt to remove
+                //
+                // If we were to suspende an encounter, we simply don't resubmit
+                await GameDatabases.deleteSubmission(Trans, submission);
+                await GameDatabases.createSubmission(Trans,
+                    submission.quest_id,
+                    submission.user_id,
+                    submission.comments,
+                    State.S.suspended);
 
-            // Update the quest
-            let quest = await GameDatabases.getQuestByID(Trans, submission.quest_id);
-            quest.state = State.Q.suspended;
-            await GameDatabases.updateQuest(Trans, quest);
+                quest.state = State.Q.suspended;
+                await GameDatabases.updateQuest(Trans, quest);
 
-            // Set the site message
-            let formatter = global.formatter;
-            let messageData = {
-                date: formatter.today(),
-                comment: comment
-            };
-            siteMessage = global._site_message.SUSPENDED;
-            await SiteMessageDB.setSiteMessage(Trans, submission.user_id, siteMessage, messageData);
+                // Set the site message
+                let formatter = global.formatter;
+                let messageData = {
+                    date: formatter.today(),
+                    comment: comment
+                };
+                siteMessage = global._site_message.SUSPENDED;
+                await SiteMessageDB.setSiteMessage(Trans, submission.user_id, siteMessage, messageData);
+            }
 
             // Commit transaction and send OK
             await Trans.commitAsync();

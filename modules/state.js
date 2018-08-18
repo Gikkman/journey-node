@@ -16,7 +16,9 @@ module.exports = function(){
             suspended: "suspended"
         },
         A: {
-            active: "active",
+            current: "current",
+            next: "next",
+            subindex: "subindex",
             encounter: "encounter"
         }
     };
