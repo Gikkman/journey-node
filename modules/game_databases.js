@@ -248,24 +248,26 @@ module.exports = function () {
         return rowGP[0].time + rowGA[0].time;
     };
     
-    obj.previousGame = async (DB, index) => {
+    //-----------------------------------------------------------
+    //              GAMESPLAYED
+    //-----------------------------------------------------------  
+    
+    obj.getLastReview = async (DB) => {
         let sql = "SELECT fg.*, gp.`index`, gp.`subindex` FROM gamesplayed AS gp"
                 + " INNER JOIN ( " + FULL_GAME_SQL 
                 + " ) AS fg ON gp.submission_id = fg.submission_id"
                 + " WHERE gp.subindex = 0 ORDER BY gp.uid DESC LIMIT 1";
-        let row = await DB.queryAsync(sql, [index]);
+        let row = await DB.queryAsync(sql);
         return row[0];
     };
     
-    obj.getCurrentIndex = async (DB) => {
-        var indexSQL = "SELECT min(`index`) as idx FROM " + ACTIVE 
-                    + " WHERE `subindex` = 0";
-        let res = await DB.queryAsync(indexSQL);
-        if(!res || !res[0])
-            throw "Could not calculate current index";
-        let index = res[0].idx;
-
-        return index;
+    obj.getReview = async (DB, index, subindex = 0) => {
+        let sql = "SELECT fg.*, gp.`index`, gp.`subindex` FROM gamesplayed AS gp"
+                + " INNER JOIN ( " + FULL_GAME_SQL 
+                + " ) AS fg ON gp.submission_id = fg.submission_id"
+                + " WHERE gp.`index` = ? AND gp.`subindex` = ?";
+        let row = await DB.queryAsync(sql, [index, subindex]);
+        return row[0];
     };
 
     return obj;

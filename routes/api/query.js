@@ -65,12 +65,30 @@ module.exports = function (MySQL, GameDatabases) {
         }
     });
     
-    router.get('/currentindex', isAuthenticated, async (req, res) => {
+    router.get('/highestindex', isAuthenticated, async (req, res) => {
         try {
-            let current = await GameDatabases.getCurrentActive(MySQL);
+            let index = 0;
+            
+            /* Calculate the highest index currently in Journey by checking:
+             * 1) If the next game has been assigned
+             * 2) If the current game has been assigned
+             * 3) If there exist a latest review
+             * Once one of these holds true, the index of that record is the
+             * highest we've assigned. If no records are found, the highest
+             * index thus far is 0.
+             */
+            
+            let record = await GameDatabases.getNextActive(MySQL);
+            if( !record )
+                record = await GameDatabases.getCurrentActive(MySQL);
+            if( !record )
+                record = await GameDatabases.getLastReview(MySQL);
+            
+            if( record )
+                index = record.index;
             
             res.status(200).json( {
-                index: current.index
+                index: index
             });
         } catch (e) {
             errorLogAndSend(res, e);
