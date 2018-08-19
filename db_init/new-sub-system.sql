@@ -23,10 +23,14 @@ UPDATE journey.game_active SET `vote_timer` = 5600 WHERE uid > 0;
 
 
 ALTER TABLE `journey`.`gamesplayed` 
-ADD COLUMN `subindex` INT(10) UNSIGNED NOT NULL DEFAULT 0 AFTER `sub_index`;
-ADD COLUMN `vote_timer` INT(10) UNSIGNED NULL AFTER `subindex`;
+ADD COLUMN `submission_id` INT(10) UNSIGNED NOT NULL AFTER `uid`,
+ADD COLUMN `subindex` INT(10) UNSIGNED NOT NULL DEFAULT 0 AFTER `sub_index`,
+ADD COLUMN `vote_timer` INT(10) UNSIGNED NULL AFTER `subindex`,
+ADD UNIQUE INDEX `key_unique_index_subindex` (`index` ASC, `subindex` ASC);
+
 
 UPDATE gamesplayed SET subindex = 1 WHERE sub_index = "B" AND `uid` > 1;
+
 
 ALTER TABLE `journey`.`gamesplayed` 
 DROP COLUMN `sub_index`;

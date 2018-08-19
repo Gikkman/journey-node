@@ -49,6 +49,34 @@ module.exports = function (MySQL, GameDatabases) {
         }
     });
     
+    router.get('/raffleblocked', isAuthenticated, async (req, res) => {
+        try {
+            let current = await GameDatabases.getCurrentActive(MySQL);
+            let previous = await GameDatabases.previousGame(MySQL);
+            
+            res.status(200).json( {
+                blocked: [
+                    {won: current.index, user_id: current.user_id},
+                    {won: previous.index, user_id: previous.user_id}
+                ]
+            });
+        } catch (e) {
+            errorLogAndSend(res, e);
+        }
+    });
+    
+    router.get('/currentindex', isAuthenticated, async (req, res) => {
+        try {
+            let current = await GameDatabases.getCurrentActive(MySQL);
+            
+            res.status(200).json( {
+                index: current.index
+            });
+        } catch (e) {
+            errorLogAndSend(res, e);
+        }
+    });
+    
     //=======================================================
     //==    Misc endpoints
     //=======================================================

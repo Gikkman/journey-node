@@ -176,7 +176,7 @@ module.exports = function () {
     obj.setNextActive = async (DB, submission) => {
         const VOTE_TIMER = global._config.vote_time_init;
         
-        let index = await getCurrentIndex(DB);
+        let index = await obj.getCurrentIndex(DB);
         index++;
         
         var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`, `index`, `vote_timer`) "
@@ -236,7 +236,6 @@ module.exports = function () {
     
     obj.getAllSubmissions = async(DB) => {
         let sql = FULL_GAME_SQL + " WHERE `s`.`state` = ? AND `s`.`deleted` IS NULL";
-        console.log(sql);
         return await DB.queryAsync(sql, [State.S.submitted]);
     };
     
@@ -248,20 +247,29 @@ module.exports = function () {
         let rowGA = await DB.queryAsync(sqlGA, []);
         return rowGP[0].time + rowGA[0].time;
     };
+    
+    obj.previousGame = async (DB, index) => {
+        let sql = "SELECT fg.*, gp.`index`, gp.`subindex` FROM gamesplayed AS gp"
+                + " INNER JOIN ( " + FULL_GAME_SQL 
+                + " ) AS fg ON gp.submission_id = fg.submission_id"
+                + " WHERE gp.subindex = 0 ORDER BY gp.uid DESC LIMIT 1";
+        let row = await DB.queryAsync(sql, [index]);
+        return row[0];
+    };
+    
+    obj.getCurrentIndex = async (DB) => {
+        var indexSQL = "SELECT min(`index`) as idx FROM " + ACTIVE 
+                    + " WHERE `subindex` = 0";
+        let res = await DB.queryAsync(indexSQL);
+        if(!res || !res[0])
+            throw "Could not calculate current index";
+        let index = res[0].idx;
+
+        return index;
+    };
 
     return obj;
 };
-
-async function getCurrentIndex(DB) {
-    var indexSQL = "SELECT min(`index`) as idx FROM " + ACTIVE 
-                + " WHERE `subindex` = 0";
-    let res = await DB.queryAsync(indexSQL);
-    if(!res || !res[0])
-        throw "Could not calculate current index";
-    let index = res[0].idx;
-    
-    return index;
-}
 
 async function getNextSubIndex(DB) {
     let index = await getCurrentIndex(DB);
