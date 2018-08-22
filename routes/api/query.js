@@ -50,15 +50,38 @@ module.exports = function (MySQL, GameDatabases) {
     });
     
     router.get('/raffleblocked', isAuthenticated, async (req, res) => {
+        /**
+         * Users are blocked from a raffle for 2 wins after they have won. So
+         * say a user wins raffle #100, then they cannot win raffle #101 nor
+         * #102, but they can win again #103.
+         * 
+         * To find the blocked users, we need to consider both the currently 
+         * active games and reviews, since the index might be in past time or 
+         * it might cover currently active games. We then filter out those games
+         * which's indices are not in the desired range, then return those we 
+         * found.
+         * 
+         * The returned set might be empty
+         */
         try {
+            let index = req.query.index;
+            
             let current = await GameDatabases.getCurrentActive(MySQL);
-            let previous = await GameDatabases.previousGame(MySQL);
+            let previous = await GameDatabases.getNextActive(MySQL);
+            let review1 = await GameDatabases.getReview(MySQL, index - 1);
+            let review2 = await GameDatabases.getReview(MySQL, index - 2);
+            
+            cleanSubmission(current, previous, review1, review2);
+            let arr = [current, previous, review1, review2]
+                    .filter(n => n !== undefined)
+                    .filter(n => n.index >= index - 2 && n.index < index)
+                    .map(n => ({
+                        won: n.index,
+                        user_id: n.user_id
+                    }));
             
             res.status(200).json( {
-                blocked: [
-                    {won: current.index, user_id: current.user_id},
-                    {won: previous.index, user_id: previous.user_id}
-                ]
+                blocked: arr
             });
         } catch (e) {
             errorLogAndSend(res, e);
