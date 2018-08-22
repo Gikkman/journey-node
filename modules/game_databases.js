@@ -153,15 +153,31 @@ module.exports = function () {
 
     //-----------------------------------------------------------
     //              ACTIVE
-    //-----------------------------------------------------------    
+    //-----------------------------------------------------------  
+    
+    /**
+     * Deletes all entries from ACTIVE that has their underlying submission
+     * marked as anything else than 'active'
+     */
+    obj.deleteEndedActives = async (DB) => {
+        var sqlDelete = 
+            " DELETE FROM " + ACTIVE + " WHERE uid IN ("
+                + " SELECT * FROM ("
+                    + " SELECT a.uid FROM game_active a"
+                    + " JOIN game_submission s ON a.submission_id = s.uid"
+                    + " WHERE s.state <> ?"
+                + " ) temp"
+            + " );";
+    
+        let deleteRow = await DB.queryAsync(sqlDelete, [State.S.active]);
+        return deleteRow.affectedRows;
+    };
+    
     obj.advanceActives = async (DB) => {
-        var sqlDelete = "DELETE FROM " + ACTIVE
-            + " WHERE `system` = " + JOURNEY + " AND `state` = ?";
         var sqlUpdate = "UPDATE " + ACTIVE + " SET "
             + " `state` = ? WHERE `system` = " + JOURNEY + " AND `state` = ?";
-        let deleteRow = await DB.queryAsync(sqlDelete, [State.A.current]);
         let updateRow = await DB.queryAsync(sqlUpdate, [State.A.current, State.A.next]);
-        return { deleted: deleteRow.affectedRows, updated: updateRow.affectedRows};
+        return updateRow.affectedRows;
     };
     
     obj.deleteSubmissionIfEncounter = async (DB, submission) => {
@@ -176,7 +192,7 @@ module.exports = function () {
     obj.setNextActive = async (DB, submission) => {
         const VOTE_TIMER = global._config.vote_time_init;
         
-        let index = await obj.getCurrentIndex(DB);
+        let index = await obj.getHighestIndex(DB);
         index++;
         
         var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`, `index`, `vote_timer`) "
@@ -248,6 +264,35 @@ module.exports = function () {
         return rowGP[0].time + rowGA[0].time;
     };
     
+    obj.getFullGame = async(DB, submissionID) => {
+        let SQL = FULL_GAME_SQL + " WHERE `s`.`submission_id` = ?";
+        let row = await DB.queryAsync(SQL, [submissionID]);
+        return row[0];
+    };
+    
+    obj.getHighestIndex = async (DB) => {
+        /* Calculate the highest index currently in Journey by checking:
+         * 1) If the next game has been assigned
+         * 2) If the current game has been assigned
+         * 3) If there exist a latest review
+         * Once one of these holds true, the index of that record is the
+         * highest we've assigned. If no records are found, the highest
+         * index thus far is 0.
+         */
+        let index = 0;    
+
+        let record = await obj.getNextActive(DB);
+        if( !record )
+            record = await obj.getCurrentActive(DB);
+        if( !record )
+            record = await obj.getLastReview(DB);
+
+        if( record )
+            index = record.index;
+        
+        return index;
+    };
+    
     //-----------------------------------------------------------
     //              GAMESPLAYED
     //-----------------------------------------------------------  
@@ -301,8 +346,8 @@ const FULL_GAME_SQL =
     + " `s`.`start_date`,"
     + " `s`.`end_date`,"
     + " IF(`s`.`dn_override` IS NOT NULL AND `s`.`dn_override` <> '',`s`.`dn_override`, `u`.`display_name`) AS `display_name`,"
-	+ " `a`.`state` AS `active_state`, "
-	+ " `a`.`vote_timer`,"
+    + " `a`.`state` AS `active_state`, "
+    + " `a`.`vote_timer`,"
     + " `a`.`index`,"
     + " `a`.`subindex`,"
     + " `q`.`title`, "

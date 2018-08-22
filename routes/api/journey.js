@@ -11,28 +11,25 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
     router.post('/progress', isAuthenticated, async (req, res) => {
         let Trans = await MySQL.transaction();
         try {
-            // Update the submission stats
+            
+            // Delete all ended submissions that are still in the ACTIVE table
+            let deleteCount = await GameDatabases.deleteEndedActives(Trans);
+            
+            // If there is no current game, and there is a next game,
+            // move the next game to the current slot
+            let updateCount = 0;
             let current = await GameDatabases.getCurrentActive(Trans);
-            if(!current){
-                throw "No 'current' game found. Cannot progress!";
+            let next = current ? null : await GameDatabases.getNextActive(Trans);
+            if(!current && next) {
+                updateCount = await GameDatabases.advanceActives(Trans);
             }
-            let outcome = current.state;
-            if(outcome !== State.S.completed && outcome !== State.S.voted_out && outcome !== State.S.suspended) {
-                throw "Invalid 'current' state. Cannot progress unless it is 'completed', 'voted out' or 'suspended'";
-            }
-
-            // Check that we actually have a Next submission
-            let next = await GameDatabases.getNextActive(Trans);
-            if(!next) {
-                throw "No 'next' game found. Cannot progress!";
-            }
-
-            // Move the next submission into the current slot
-            await GameDatabases.advanceActives(Trans);
-
+            
             // Commit transaction and send OK
             await Trans.commitAsync();
-            res.status(200).send("OK. Journey has progressed");
+            res.status(200).send(
+                "OK. Journey has progressed." 
+                + " Delete count: " + deleteCount 
+                + " Update count: " + updateCount);
         } catch (e) {
             // If error, rollback and send ERROR
             await Trans.rollbackAsync();
