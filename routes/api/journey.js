@@ -12,24 +12,14 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
         let Trans = await MySQL.transaction();
         try {
             
-            // Delete all ended submissions that are still in the ACTIVE table
-            let deleteCount = await GameDatabases.deleteEndedActives(Trans);
-            
-            // If there is no current game, and there is a next game,
-            // move the next game to the current slot
-            let updateCount = 0;
-            let current = await GameDatabases.getCurrentActive(Trans);
-            let next = current ? null : await GameDatabases.getNextActive(Trans);
-            if(!current && next) {
-                updateCount = await GameDatabases.advanceActives(Trans);
-            }
+            let progress = await progressActives(Trans, GameDatabases);
             
             // Commit transaction and send OK
             await Trans.commitAsync();
             res.status(200).send(
                 "OK. Journey has progressed." 
-                + " Delete count: " + deleteCount 
-                + " Update count: " + updateCount);
+                + " Delete count: " + progress.deleted 
+                + " Update count: " + progress.updated);
         } catch (e) {
             // If error, rollback and send ERROR
             await Trans.rollbackAsync();
@@ -78,10 +68,15 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
                 let siteMessage = global._site_message.COMPLETED;
                 await SiteMessageDB.setSiteMessage(Trans, submission.user_id, siteMessage, messageData);
             }
+            
+            let progress = await progressActives(Trans, GameDatabases);
 
             // Commit transaction and send OK
             await Trans.commitAsync();
-            res.status(200).send("OK. Submission completed");
+            res.status(200).send("OK. Submission completed."
+                + " Journey has progressed!" 
+                + " (Deleted: " + progress.deleted  
+                + " Updated: " + progress.updated);
         } catch (e) {
             // If error, rollback and send ERROR
             await Trans.rollbackAsync();
@@ -159,10 +154,15 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
                     global._site_message.VOTED_OUT;
                 await SiteMessageDB.setSiteMessage(Trans, submission.user_id, siteMessage, messageData);
             }
+            
+            let progress = await progressActives(Trans, GameDatabases);
 
             // Commit transaction and send OK
             await Trans.commitAsync();
-            res.status(200).send("OK. Submission voted out");
+            res.status(200).send("OK. Submission voted out."
+                + " Journey has progressed!" 
+                + " (Deleted: " + progress.deleted  
+                + " Updated: " + progress.updated);
         } catch (e) {
             // If error, rollback and send ERROR
             await Trans.rollbackAsync();
@@ -220,9 +220,14 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
                 await SiteMessageDB.setSiteMessage(Trans, submission.user_id, siteMessage, messageData);
             }
 
+            let progress = await progressActives(Trans, GameDatabases);
+
             // Commit transaction and send OK
             await Trans.commitAsync();
-            res.status(200).send("OK. Submission suspended");
+            res.status(200).send("OK. Submission suspended."
+                + " Journey has progressed!" 
+                + " (Deleted: " + progress.deleted  
+                + " Updated: " + progress.updated);
         } catch (e) {
             // If error, rollback and send ERROR
             await Trans.rollbackAsync();
@@ -307,9 +312,15 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
             };
             await GameDatabases.updateQuest(Trans, quest);
 
+            // Progress actives (i.e. set the one just assigned as next as current)
+            let progress = await progressActives(Trans, GameDatabases);
+
             // Commit transaction and send OK
             await Trans.commitAsync();
-            res.status(200).send("OK. Next game set");
+            res.status(200).send("OK. Next game set."
+                + " Journey has progressed!" 
+                + " (Deleted: " + progress.deleted  
+                + " Updated: " + progress.updated);
 
         } catch (e) {
             // If error, rollback and send ERROR
@@ -450,4 +461,24 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
         console.log( error instanceof Error ? error.stack : error);
         res.status(500).send(error instanceof Error ? error.message : error);
     }
+};
+
+
+async function progressActives(Trans, GameDatabases) {
+    // Delete all ended submissions that are still in the ACTIVE table
+    let deleteCount = await GameDatabases.deleteEndedActives(Trans);
+
+    // If there is no current game, and there is a next game,
+    // move the next game to the current slot
+    let updateCount = 0;
+    let current = await GameDatabases.getCurrentActive(Trans);
+    let next = current ? null : await GameDatabases.getNextActive(Trans);
+    if(!current && next) {
+        updateCount = await GameDatabases.advanceActives(Trans);
+    }
+    
+    return {
+        deleted: deleteCount,
+        updated: updateCount
+    };
 };
