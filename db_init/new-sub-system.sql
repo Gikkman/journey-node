@@ -42,7 +42,30 @@ INSERT INTO `journey`.`config` (`key`, `value`) VALUES ('vote_time_init', '5400'
 
 
 CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `active` AS select `ga`.`index` AS `index`,`ga`.`subindex` AS `subindex`,`ga`.`state` AS `state`,`ga`.`vote_timer` AS `vote_timer`,`gs`.`seconds_played` AS `seconds_played`,`gs`.`uid` AS `s_id`,`gq`.`uid` AS `q_id`,`gs`.`state` AS `s_state`,`gq`.`state` AS `q_state`,`gq`.`title` AS `title`,`gq`.`system` AS `system`,`gq`.`goal` AS `goal` from ((`game_active` `ga` left join `game_submission` `gs` on((`ga`.`submission_id` = `gs`.`uid`))) left join `game_quest` `gq` on((`gs`.`quest_id` = `gq`.`uid`))) order by `ga`.`index`,`ga`.`subindex`;
-
 CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `submissions` AS select `gs`.`uid` AS `submission_id`,`gq`.`title` AS `title`,`gq`.`system` AS `system`,`gq`.`goal` AS `goal`,`gs`.`seconds_played` AS `time` from (`game_submission` `gs` left join `game_quest` `gq` on((`gs`.`quest_id` = `gq`.`uid`))) where ((`gs`.`state` = 'submitted') and isnull(`gs`.`deleted`));
-
 CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `suspended` AS select `gs`.`uid` AS `submission_id`,`gq`.`title` AS `title`,`gq`.`system` AS `system`,`gq`.`goal` AS `goal`,`gs`.`deleted` AS `deleted` from (`game_submission` `gs` left join `game_quest` `gq` on((`gs`.`quest_id` = `gq`.`uid`))) where ((`gs`.`state` = 'suspended') and isnull(`gs`.`deleted`));
+
+
+
+INSERT INTO `journey`.`game_quest`
+( `created`,`updated`,`title`,`system`,`goal`,`state`,`seconds_played`,`times_played`)
+VALUES
+("2018-01-18 20:00:00", "2018-01-18 21:00:00", "Sexy Parodius","PSX","Beat the game","completed",3632,1);
+
+INSERT INTO `journey`.`game_submission`
+(`quest_id`,`user_id`,`created`,`updated`,`deleted`,`comments`,`state`,`seconds_played`,`start_date`,`end_date`)
+VALUES
+(LAST_INSERT_ID(), 39453711,"2018-01-18 20:00:00","2018-01-18 21:00:00","2018-01-18 21:00:00","","completed",3632,"2018-01-18","2018-01-18");
+
+
+
+INSERT INTO `journey`.`game_quest`
+( `created`,`updated`,`title`,`system`,`goal`,`state`,`seconds_played`,`times_played`)
+VALUES
+("2018-02-18 10:00:00", "2018-02-18 12:00:00", "The Beginner's Guide","PC","Beat the game","completed",5654,1);
+
+INSERT INTO `journey`.`game_submission`
+(`quest_id`,`user_id`,`created`,`updated`,`deleted`,`comments`,`state`,`seconds_played`,`start_date`,`end_date`)
+VALUES
+(LAST_INSERT_ID(), 107568591,"2018-02-18 10:00:00", "2018-02-18 12:00:00","2018-02-18 12:00:00","","completed",5654,"2018-02-18","2018-02-18");
+

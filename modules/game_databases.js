@@ -256,12 +256,9 @@ module.exports = function () {
     };
     
     obj.getTotalTime = async(DB) => {
-        let sqlGP = "SELECT sum(`seconds_played`) AS `time` FROM gamesplayed";
-        let rowGP = await DB.queryAsync(sqlGP, []);
-        let sqlGA = "SELECT sum(`seconds_played`) AS `time` FROM " + ACTIVE + " AS a"
-                    + " JOIN " + SUBMISSONS + " AS s ON a.submission_id = s.uid";
-        let rowGA = await DB.queryAsync(sqlGA, []);
-        return rowGP[0].time + rowGA[0].time;
+        let sql = "SELECT SUM(`seconds_played`) AS `time` FROM " + SUBMISSONS;
+        let row = await DB.queryAsync(sql, []);
+        return row[0].time;
     };
     
     obj.getFullGame = async(DB, submissionID) => {
