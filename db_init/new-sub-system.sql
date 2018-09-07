@@ -1,7 +1,5 @@
-/**
- * Author:  Gikkman
- * Created: Jul 25, 2018
- */
+USE `journey`;
+
 ALTER TABLE `journey`.`game_submission`
 ADD COLUMN `dn_override` VARCHAR(45) NULL AFTER `end_date`;
 
@@ -16,28 +14,27 @@ ADD COLUMN `vote_timer` INT(10) UNSIGNED NULL AFTER `subindex`;
 ALTER TABLE `journey`.`game_active` 
 DROP INDEX `game_active_unique` ;
 
-UPDATE journey.game_active SET `index` = (SELECT MAX(`index`) FROM gamesplayed) + 1 WHERE `system` = 'journey' AND `state` = 'current';
-UPDATE journey.game_active SET `index` = (SELECT MAX(`index`) FROM gamesplayed) + 2 WHERE `system` = 'journey' AND `state` = 'next';
-UPDATE journey.game_active SET `vote_timer` = 5600 WHERE uid > 0;
+UPDATE `journey`.`game_active`  SET `index` = (SELECT MAX(`index`) FROM gamesplayed) + 1 WHERE `system` = 'journey' AND `state` = 'current';
+UPDATE `journey`.`game_active`  SET `index` = (SELECT MAX(`index`) FROM gamesplayed) + 2 WHERE `system` = 'journey' AND `state` = 'next';
+UPDATE `journey`.`game_active`  SET `vote_timer` = 5220 WHERE uid > 0;
 
 
 
 ALTER TABLE `journey`.`gamesplayed` 
 ADD COLUMN `submission_id` INT(10) UNSIGNED NOT NULL AFTER `uid`,
-ADD COLUMN `subindex` INT(10) UNSIGNED NOT NULL DEFAULT 0 AFTER `sub_index`,
-ADD COLUMN `vote_timer` INT(10) UNSIGNED NULL AFTER `subindex`,
+ADD COLUMN `subindex` INT(10) UNSIGNED NOT NULL DEFAULT 0 AFTER `sub_index`;
+
+UPDATE `journey`.`gamesplayed` SET subindex = 1 WHERE sub_index = "B" AND `uid` > 1;
+UPDATE `journey`.`gamesplayed` SET `title`='Tomba! 2' WHERE `uid`='196';
+UPDATE `journey`.`gamesplayed` SET `title`='FTL: Faster than light' WHERE `uid`='258';
+
+ALTER TABLE `journey`.`gamesplayed` 
+DROP COLUMN `sub_index`,
 ADD UNIQUE INDEX `key_unique_index_subindex` (`index` ASC, `subindex` ASC);
 
 
-UPDATE gamesplayed SET subindex = 1 WHERE sub_index = "B" AND `uid` > 1;
 
-
-ALTER TABLE `journey`.`gamesplayed` 
-DROP COLUMN `sub_index`;
-
-
-
-INSERT INTO `journey`.`config` (`key`, `value`) VALUES ('vote_time_init', '5400');
+INSERT INTO `journey`.`config` (`key`, `value`) VALUES ('vote_time_init', '5220');
 
 
 
