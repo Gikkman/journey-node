@@ -255,39 +255,10 @@ module.exports = function () {
         return await DB.queryAsync(sql, [State.S.submitted]);
     };
     
-    obj.getTotalTime = async(DB) => {
-        let sql = "SELECT SUM(`seconds_played`) AS `time` FROM " + SUBMISSONS;
-        let row = await DB.queryAsync(sql, []);
-        return row[0].time;
-    };
-    
     obj.getFullGame = async(DB, submissionID) => {
         let SQL = FULL_GAME_SQL + " WHERE `s`.`submission_id` = ?";
         let row = await DB.queryAsync(SQL, [submissionID]);
         return row[0];
-    };
-    
-    obj.getHighestIndex = async (DB) => {
-        /* Calculate the highest index currently in Journey by checking:
-         * 1) If the next game has been assigned
-         * 2) If the current game has been assigned
-         * 3) If there exist a latest review
-         * Once one of these holds true, the index of that record is the
-         * highest we've assigned. If no records are found, the highest
-         * index thus far is 0.
-         */
-        let index = 0;    
-
-        let record = await obj.getNextActive(DB);
-        if( !record )
-            record = await obj.getCurrentActive(DB);
-        if( !record )
-            record = await obj.getLastReview(DB);
-
-        if( record )
-            index = record.index;
-        
-        return index;
     };
     
     //-----------------------------------------------------------
