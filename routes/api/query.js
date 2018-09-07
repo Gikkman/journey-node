@@ -2,7 +2,7 @@ var express = require('express');
 const State = global._state;
 const Config = global._config;
 
-module.exports = function (MySQL, GameDatabases) {
+module.exports = function (MySQL, GameDatabases, GameDatabasesCrossQuery) {
     var router = express.Router();
     
     router.get('/actives', isAuthenticated, async (req, res) => {
@@ -39,7 +39,7 @@ module.exports = function (MySQL, GameDatabases) {
     
     router.get('/totaltime', isAuthenticated, async (req, res) => {
         try {
-            let time = await GameDatabases.getTotalTime(MySQL);
+            let time = await GameDatabasesCrossQuery.getTotalTime(MySQL);
             
             res.status(200).json( {
                 total_time_seconds: time
@@ -95,6 +95,17 @@ module.exports = function (MySQL, GameDatabases) {
             res.status(200).json( {
                 index: index
             });
+        } catch (e) {
+            errorLogAndSend(res, e);
+        }
+    });
+    
+    router.get('/submissionstatistics', isAuthenticated, async (req, res) => {
+        try {
+            let stats = await GameDatabasesCrossQuery.getSubmissionsStatistics(MySQL);
+            res.status(200).json( {
+                stats
+            });           
         } catch (e) {
             errorLogAndSend(res, e);
         }
