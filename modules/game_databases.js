@@ -189,11 +189,8 @@ module.exports = function () {
         return false;
     };
 
-    obj.setNextActive = async (DB, submission) => {
+    obj.setNextActive = async (DB, submission, index) => {
         const VOTE_TIMER = global._config.vote_time_init;
-        
-        let index = await obj.getHighestIndex(DB);
-        index++;
         
         var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`, `index`, `vote_timer`) "
             + " VALUES (?," + JOURNEY + ", ?, ?, ?)";
@@ -201,21 +198,19 @@ module.exports = function () {
         return row.affectedRows;
     };
     
-    obj.setSubindexActive = async (DB, submission) => {
+    obj.setSubindexActive = async (DB, submission, index) => {
         const VOTE_TIMER = global._config.vote_time_init;
-        
-        let i = await getNextSubIndex(DB);     
+            
         var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`, `index`, `subindex`, `vote_timer`) "
             + " VALUES (?," + JOURNEY + ",?, ?, ?, ?)";
-        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.subindex, i.index, i.subIndex, VOTE_TIMER]);
+        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.subindex, index.index, index.subIndex, VOTE_TIMER]);
         return row.affectedRows;
     };
     
-    obj.setEncounterActive = async (DB, submission) => {
-        let i = await getNextSubIndex(DB);     
+    obj.setEncounterActive = async (DB, submission, index) => {    
         var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`, `index`, `subindex`) "
             + " VALUES (?," + JOURNEY + ",?, ?, ?)";
-        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.encounter, i.index, i.subIndex]);
+        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.encounter, index.index, index.subIndex]);
         return row.affectedRows;
     };
 
@@ -285,21 +280,6 @@ module.exports = function () {
 
     return obj;
 };
-
-async function getNextSubIndex(DB) {
-    let index = await getCurrentIndex(DB);
-    var subIndexSQL = "SELECT MAX(`subindex`) + 1 as idx FROM " + ACTIVE 
-                    + " WHERE `index` = ?"
-                    + " UNION"
-                    + " SELECT MAX(`subindex`) + 1 as idx FROM `gamesplayed`"
-                    + " WHERE `index` = ?";
-    let subRes = await DB.queryAsync(subIndexSQL, [index, index]);
-    if(!subRes || !subRes[0])
-        throw "Could not calculate next subindex";
-    let subIndex = Math.max(subRes[0].idx, subRes[1].idx);
-    
-    return { index:index, subIndex:subIndex };
-}
 
 const FULL_GAME_SQL = 
 "SELECT `s`.`uid` AS `submission_id`, "

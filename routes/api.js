@@ -11,7 +11,7 @@ module.exports = function (MySQL) {
 
     // Fetch handlers
     var submit = require('./api/submit.js')(MySQL, TokenDatabase, GameDatabases);
-    var journey = require('./api/journey.js')(MySQL, GameDatabases, SiteMessageDB);
+    var journey = require('./api/journey.js')(MySQL, GameDatabases, GameDatabasesCrossQuery, SiteMessageDB);
     var query = require('./api/query.js')(MySQL, GameDatabases, GameDatabasesCrossQuery);
 
     // Api routes

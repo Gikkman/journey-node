@@ -71,15 +71,54 @@ module.exports = function(GameDatabases) {
 
             return index;
         };
+        
+        obj.getNextSubIndex = async (DB) => {
+            let index = await obj.getHighestIndex(DB);
+            var subIndexSQL = "SELECT MAX(`subindex`) + 1 as idx FROM `game_active`" 
+                            + " WHERE `index` = ?"
+                            + " UNION"
+                            + " SELECT MAX(`subindex`) + 1 as idx FROM `gamesplayed`"
+                            + " WHERE `index` = ?";
+            let subRes = await DB.queryAsync(subIndexSQL, [index, index]);
+            if(!subRes || !subRes[0])
+                throw "Could not calculate next subindex";
+            let subIndex = Math.max(subRes[0].idx, subRes[1].idx);
+
+            return { index:index, subIndex:subIndex };
+        };
     
 	return obj;
 } ;
 
+const FULL_GAME_SQL = 
+"SELECT `s`.`uid` AS `submission_id`, "
+    + " `s`.`quest_id`,"
+    + " `s`.`user_id`,"
+    + " `s`.`created`,"
+    + " `s`.`updated`,"
+    + " `s`.`deleted`,"
+    + " `s`.`comments`,"
+    + " `s`.`state`,"
+    + " `s`.`seconds_played`,"
+    + " `s`.`start_date`,"
+    + " `s`.`end_date`,"
+    + " IF(`s`.`dn_override` IS NOT NULL AND `s`.`dn_override` <> '',`s`.`dn_override`, `u`.`display_name`) AS `display_name`,"
+    + " `a`.`state` AS `active_state`, "
+    + " `a`.`vote_timer`,"
+    + " `a`.`index`,"
+    + " `a`.`subindex`,"
+    + " `q`.`title`, "
+    + " `q`.`system`,"
+    + " `q`.`goal`,"
+    + " `q`.`seconds_played` + `s`.`seconds_played` AS total_seconds_played,"
+    + " `q`.`times_played`"
++ " FROM `game_submission` AS `s`"
+	+ " LEFT JOIN `game_active` AS `a` ON `s`.`uid` = `a`.`submission_id`"
+    + " LEFT JOIN `game_quest` AS `q` ON `q`.`uid` = `s`.`quest_id`"
+    + " LEFT JOIN `users` AS `u` ON `u`.`user_id` = `s`.`user_id`";
 
 // Get abandoned
-let getAbandonedQuery =
-" SELECT q.uid, q.title, q.system, q.goal, q.times_played, q.seconds_played FROM game_quest q " +
-" JOIN game_submission s ON s.quest_id = q.uid                                                " +
+let getAbandonedQuery = FULL_GAME_SQL +
 " WHERE q.uid NOT IN (                                                                        " +
 "   SELECT s.quest_id FROM `game_submission` s                                                " +
 "   WHERE deleted IS NULL                                                                     " +
@@ -89,34 +128,24 @@ let getAbandonedQuery =
 " GROUP BY q.uid;                                                                             " ;
 
 // Get completed
-let getCompletedQuery =
-" SELECT q.uid, q.title, q.system, q.goal, q.times_played, q.seconds_played FROM game_quest q " +
-" JOIN game_submission s ON s.quest_id = q.uid                                                " +
+let getCompletedQuery = FULL_GAME_SQL +
 " WHERE s.state = 'completed';                                                                " ;
 
 // Get suspended
-let getSuspendedQuery =
-" SELECT q.uid, q.title, q.system, q.goal, q.times_played, q.seconds_played FROM game_quest q " +
-" JOIN game_submission s ON s.quest_id = q.uid                                                " +
+let getSuspendedQuery = FULL_GAME_SQL +
 " WHERE s.state = 'suspended'                                                                 " +
 " AND s.deleted IS NULL;                                                                      " ;
 
 // Get actives
-let getActiveQuery =
-" SELECT q.uid, q.title, q.system, q.goal, q.times_played, q.seconds_played FROM game_quest q " +
-" JOIN game_submission s ON s.quest_id = q.uid                                                " +
+let getActiveQuery = FULL_GAME_SQL +
 " WHERE s.state = 'active'                                                                    " +
 " AND s.deleted IS NULL;                                                                      " ;
 
 // Get submitted
-let getSubmittedQuery =
-" SELECT q.uid, q.title, q.system, q.goal, q.times_played, q.seconds_played FROM game_quest q " +
-" JOIN game_submission s ON s.quest_id = q.uid                                                " +
+let getSubmittedQuery = FULL_GAME_SQL +
 " WHERE s.state = 'submitted'                                                                 " +
 " AND s.deleted IS NULL;                                                                      " ;
 
 // Get limbo
-let getLimboQuery =
-" SELECT q.uid, q.title, q.system, q.goal, q.times_played, q.seconds_played FROM game_quest q " +
-" JOIN game_submission s ON s.quest_id = q.uid                                                " +
+let getLimboQuery = FULL_GAME_SQL +
 " WHERE (s.state = 'voted out'  AND s.deleted IS NULL)                                        " ;

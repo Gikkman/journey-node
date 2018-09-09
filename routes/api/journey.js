@@ -2,7 +2,7 @@ var express = require('express');
 const State = global._state;
 const Config = global._config;
 
-module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
+module.exports = function (MySQL, GameDatabases, GameDatabasesQuery, SiteMessageDB) {
     var router = express.Router();
 
     //=======================================================
@@ -297,7 +297,9 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
                 throw "Submission " + currentNext.submission_id + " is already assigned as 'next'";
 
             // Queue the submission as NEXT
-            let affected = await GameDatabases.setNextActive(Trans, submission);
+            let index = await GameDatabasesQuery.getHighestIndex(Trans);
+            index++;
+            let affected = await GameDatabases.setNextActive(Trans, submission, index);
             if (affected === 0)
                 throw "Error inserting submission as 'next'";
 
@@ -351,7 +353,8 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
                 throw "Submission " + submissionID + " has been deleted";
 
             // Set the submission as a subindex
-            let affected = await GameDatabases.setSubindexActive(Trans, submission);
+            let index = await GameDatabasesQuery.getNextSubIndex(Trans);
+            let affected = await GameDatabases.setSubindexActive(Trans, submission, index);
             if (affected === 0)
                 throw "Error inserting submission as 'subindex'";
 
