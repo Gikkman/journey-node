@@ -13,6 +13,13 @@ CREATE TABLE `users` (
   UNIQUE KEY `id_UNIQUE` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE DEFINER=`root`@`localhost` trigger on_new_user_trigger after insert on users
+for each row
+begin
+    insert into user_variables (user_id) values (new.user_id);
+    insert into user_statuses (user_id) values (new.user_id);
+end
+
 CREATE TABLE `chat_customcommands` (
   `command` varchar(15) NOT NULL,
   `response` text NOT NULL,

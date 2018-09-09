@@ -27,7 +27,7 @@ module.exports = function () {
     };
 
     const questModifiableFieldsLimited = ['title', 'system', 'goal'];
-    const questModifiableFields = ['title', 'system', 'goal','state', 'seconds_played', 'times_played' ];
+    const questModifiableFields = ['title', 'system', 'goal', 'state', 'seconds_played', 'times_played' ];
     obj.updateQuest = async (DB, quest, limited) => {
         if(!quest.quest_id){
             return 'Missing quest ID';
@@ -68,11 +68,11 @@ module.exports = function () {
         return submissionsAllowed;
     };
 
-    obj.createSubmission = async (DB, questID, userID, comments) => {
+    obj.createSubmission = async (DB, questID, userID, comments, state = State.S.submitted) => {
         var sql = "INSERT INTO " + SUBMISSONS
             + " (`quest_id`, `user_id`, `comments`, `created`, `updated`, `state`)"
             + " VALUES (?,?,?, NOW(), NOW(), ?)";
-        let data = await DB.queryAsync(sql, [questID, userID, comments, State.S.submitted]);
+        let data = await DB.queryAsync(sql, [questID, userID, comments, state]);
         return data.insertId;
     };
 
@@ -126,8 +126,8 @@ module.exports = function () {
             + " WHERE `s`.`user_id` = ? AND `s`.`deleted` IS NULL";
         let rows = await DB.queryAsync(sql, [userID]);
 
-        if (rows.lenght > 1)
-            throw new Error("Illigal submission state. Too many submission: " + rows.lenght);
+        if (rows.length > 1)
+            throw new Error("Illigal submission state. Too many submission: " + rows.length);
         else
             return rows[0];
     };
@@ -145,62 +145,165 @@ module.exports = function () {
             + " WHERE `s`.`uid` = ? AND `s`.`deleted` IS NULL";
         let rows = await DB.queryAsync(sql, [submissionID]);
 
-        if (rows.lenght > 1)
-            throw new Error("Illigal submission state. Too many submission: " + rows.lenght);
+        if (rows.length > 1)
+            throw new Error("Illigal submission state. Too many submission: " + rows.length);
         else
             return rows[0];
     };
 
     //-----------------------------------------------------------
     //              ACTIVE
-    //-----------------------------------------------------------
-    obj.suspend = async(DB, submission) => {
-        let sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`) "
-            + " VALUES (?, " + JOURNEY + ", ?)";
-        await DB.queryAsync(sql, [submission.submission_id, State.A.suspended]);
+    //-----------------------------------------------------------  
+    
+    /**
+     * Deletes all entries from ACTIVE that has their underlying submission
+     * marked as anything else than 'active'
+     */
+    obj.deleteEndedActives = async (DB) => {
+        var sqlDelete = 
+            " DELETE FROM " + ACTIVE + " WHERE uid IN ("
+                + " SELECT * FROM ("
+                    + " SELECT a.uid FROM game_active a"
+                    + " JOIN game_submission s ON a.submission_id = s.uid"
+                    + " WHERE s.state <> ?"
+                + " ) temp"
+            + " );";
+    
+        let deleteRow = await DB.queryAsync(sqlDelete, [State.S.active]);
+        return deleteRow.affectedRows;
     };
-
-    obj.removeSuspended = async(DB, submission) => {
-        let sql = "DELETE FROM " + ACTIVE + " WHERE `submission_id` = ? AND `state` = ?";
-        await DB.queryAsync(sql, [submission.submission_id, State.A.suspended]);
-    };
-
+    
     obj.advanceActives = async (DB) => {
-        var sqlDelete = "DELETE FROM " + ACTIVE
-            + " WHERE `system` = " + JOURNEY + " AND `state` = ?";
         var sqlUpdate = "UPDATE " + ACTIVE + " SET "
             + " `state` = ? WHERE `system` = " + JOURNEY + " AND `state` = ?";
-        let deleteRow = await DB.queryAsync(sqlDelete, [State.A.current]);
         let updateRow = await DB.queryAsync(sqlUpdate, [State.A.current, State.A.next]);
-        return { deleted: deleteRow.affectedRows, updated: updateRow.affectedRows};
+        return updateRow.affectedRows;
+    };
+    
+    obj.deleteSubmissionIfEncounter = async (DB, submission) => {
+        if(submission.active_state === State.A.encounter) {
+            let sql = "DELTE FROM " + ACTIVE + " WHERE `submission_id` = ?";
+            await DB.queryAsync(sql, [submission.submission_id]);            
+            return true;
+        }
+        return false;
     };
 
-    obj.setNextActive = async (DB, submission) => {
-        var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`) "
-            + " VALUES (?," + JOURNEY + ",?)";
-        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.next]);
+    obj.setNextActive = async (DB, submission, index) => {
+        const VOTE_TIMER = global._config.vote_time_init;
+        
+        var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`, `index`, `vote_timer`) "
+            + " VALUES (?," + JOURNEY + ", ?, ?, ?)";
+        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.next, index, VOTE_TIMER]);
+        return row.affectedRows;
+    };
+    
+    obj.setSubindexActive = async (DB, submission, index) => {
+        const VOTE_TIMER = global._config.vote_time_init;
+            
+        var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`, `index`, `subindex`, `vote_timer`) "
+            + " VALUES (?," + JOURNEY + ",?, ?, ?, ?)";
+        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.subindex, index.index, index.subIndex, VOTE_TIMER]);
+        return row.affectedRows;
+    };
+    
+    obj.setEncounterActive = async (DB, submission, index) => {    
+        var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`, `index`, `subindex`) "
+            + " VALUES (?," + JOURNEY + ",?, ?, ?)";
+        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.encounter, index.index, index.subIndex]);
         return row.affectedRows;
     };
 
     obj.getNextActive = async (DB) => {
-        var sql = "SELECT `a`.*, `s`.* "
-                + " FROM " + ACTIVE + " AS a"
-                    + " LEFT JOIN `game_submission` AS `s`"
-                    + " ON `s`.`uid` = `a`.`submission_id`"
+        let sql = FULL_GAME_SQL
                 + " WHERE `a`.`system` = " + JOURNEY + " AND `a`.`state` = ?";
         let rows = await DB.queryAsync(sql, [State.A.next]);
         return rows[0];
     };
 
-    obj.getCurrentActive = async (DB) => {
-        var sql = "SELECT `a`.*, `s`.* "
-                + " FROM " + ACTIVE + " AS `a`"
-                    + " LEFT JOIN `game_submission` AS `s`"
-                    + " ON `s`.`uid` = `a`.`submission_id`"
+    obj.getCurrentActive = async (DB) => {       
+        let sql = FULL_GAME_SQL
                 + " WHERE `a`.`system` = " + JOURNEY + " AND `a`.`state` = ?";
         let rows = await DB.queryAsync(sql, [State.A.current]);
         return rows[0];
     };
+    
+    obj.getSubindexActive = async (DB) => {
+        let sql = FULL_GAME_SQL
+                + " WHERE `a`.`system` = " + JOURNEY + " AND `a`.`state` = ? AND `s`.`state` = ?";
+        return DB.queryAsync(sql, [State.A.subindex, State.S.active]);
+    };
+    
+    obj.updateVoteTimer = async (DB, submission, vote_timer) => {
+        let sql = "UPDATE " + ACTIVE + " SET `vote_timer` = ? WHERE `submission_id` = ?";
+        let rows = await DB.queryAsync(sql, [vote_timer, submission.submission_id]);
+        return rows.affectedRows;
+    };
+    
+    
+    //-----------------------------------------------------------
+    //              CROSS - QUERIES 
+    //-----------------------------------------------------------  
+    
+    obj.getAllSubmissions = async(DB) => {
+        let sql = FULL_GAME_SQL + " WHERE `s`.`state` = ? AND `s`.`deleted` IS NULL";
+        return await DB.queryAsync(sql, [State.S.submitted]);
+    };
+    
+    obj.getFullGame = async(DB, submissionID) => {
+        let SQL = FULL_GAME_SQL + " WHERE `s`.`submission_id` = ?";
+        let row = await DB.queryAsync(SQL, [submissionID]);
+        return row[0];
+    };
+    
+    //-----------------------------------------------------------
+    //              GAMESPLAYED
+    //-----------------------------------------------------------  
+    
+    obj.getLastReview = async (DB) => {
+        let sql = "SELECT fg.*, gp.`index`, gp.`subindex` FROM gamesplayed AS gp"
+                + " INNER JOIN ( " + FULL_GAME_SQL 
+                + " ) AS fg ON gp.submission_id = fg.submission_id"
+                + " WHERE gp.subindex = 0 ORDER BY gp.uid DESC LIMIT 1";
+        let row = await DB.queryAsync(sql);
+        return row[0];
+    };
+    
+    obj.getReview = async (DB, index, subindex = 0) => {
+        let sql = "SELECT fg.*, gp.`index`, gp.`subindex` FROM gamesplayed AS gp"
+                + " INNER JOIN ( " + FULL_GAME_SQL 
+                + " ) AS fg ON gp.submission_id = fg.submission_id"
+                + " WHERE gp.`index` = ? AND gp.`subindex` = ?";
+        let row = await DB.queryAsync(sql, [index, subindex]);
+        return row[0];
+    };
 
     return obj;
 };
+
+const FULL_GAME_SQL = 
+"SELECT `s`.`uid` AS `submission_id`, "
+    + " `s`.`quest_id`,"
+    + " `s`.`user_id`,"
+    + " `s`.`created`,"
+    + " `s`.`updated`,"
+    + " `s`.`deleted`,"
+    + " `s`.`comments`,"
+    + " `s`.`state`,"
+    + " `s`.`seconds_played`,"
+    + " `s`.`start_date`,"
+    + " `s`.`end_date`,"
+    + " IF(`s`.`dn_override` IS NOT NULL AND `s`.`dn_override` <> '',`s`.`dn_override`, `u`.`display_name`) AS `display_name`,"
+    + " `a`.`state` AS `active_state`, "
+    + " `a`.`vote_timer`,"
+    + " `a`.`index`,"
+    + " `a`.`subindex`,"
+    + " `q`.`title`, "
+    + " `q`.`system`,"
+    + " `q`.`goal`,"
+    + " `q`.`seconds_played` + `s`.`seconds_played` AS total_seconds_played,"
+    + " `q`.`times_played`"
++ " FROM `game_submission` AS `s`"
+	+ " LEFT JOIN `game_active` AS `a` ON `s`.`uid` = `a`.`submission_id`"
+    + " LEFT JOIN `game_quest` AS `q` ON `q`.`uid` = `s`.`quest_id`"
+    + " LEFT JOIN `users` AS `u` ON `u`.`user_id` = `s`.`user_id`";

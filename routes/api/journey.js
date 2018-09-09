@@ -2,41 +2,35 @@ var express = require('express');
 const State = global._state;
 const Config = global._config;
 
-module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
+module.exports = function (MySQL, GameDatabases, GameDatabasesQuery, SiteMessageDB) {
     var router = express.Router();
 
+    //=======================================================
+    //==    Progress endpoint
+    //=======================================================
     router.post('/progress', isAuthenticated, async (req, res) => {
         let Trans = await MySQL.transaction();
         try {
-            // Update the submission stats
-            let current = await GameDatabases.getCurrentActive(Trans);
-            if(!current){
-                throw "No 'current' game found. Cannot progress!";
-            }
-            let outcome = current.state;
-            if(outcome !== State.S.completed && outcome !== State.S.voted_out && outcome !== State.S.suspended) {
-                throw "Invalid 'current' state. Cannot progress unless it is 'completed', 'voted out' or 'suspended'";
-            }
-
-            // Check that we actually have a Next submission
-            let next = await GameDatabases.getNextActive(Trans);
-            if(!next) {
-                throw "No 'next' game found. Cannot progress!";
-            }
-
-            // Move the next submission into the current slot
-            await GameDatabases.advanceActives(Trans);
-
+            
+            let progress = await progressActives(Trans, GameDatabases);
+            
             // Commit transaction and send OK
             await Trans.commitAsync();
-            res.status(200).send("OK. Journey has progressed");
+            res.status(200).send(
+                "OK. Journey has progressed." 
+                + " Delete count: " + progress.deleted 
+                + " Update count: " + progress.updated);
         } catch (e) {
             // If error, rollback and send ERROR
             await Trans.rollbackAsync();
             errorLogAndSend(res, e);
         }
     });
-
+    
+    //=======================================================
+    //==    Ender endpoints
+    //=======================================================
+    
     router.post('/complete', isAuthenticated, async (req,res) => {
         let Trans = await MySQL.transaction();
         try {
@@ -53,44 +47,36 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
             }
 
             // Fetch submission and quest
-            let submission = await GameDatabases.getSubmissionBySubmissionID(Trans, submission_id);
-            if(!submission) {
-                throw "No submission received when querying ID " + submission_id;
-            }
-            if(!submission.active_state) {
-                throw "Cannot complete a submission that is not active";
-            }
-            let quest = await GameDatabases.getQuestByID(Trans, submission.quest_id);
-            if(!quest) {
-                throw "No quest received when querying ID " + submission.quest_id;
-            }
+            let submission = await getAndVerifySubmission(Trans, submission_id);
+            let quest = await getAndVerifyQuest(Trans, submission);
 
             // Make relevant updates
-            submission.state = State.S.completed;
-            submission.start_date = submission.start_date || 'NOW()';
-            submission.end_date = 'NOW()';
-            await GameDatabases.updateSubmission(Trans, submission);
+            await updateSubmissionAndQuest(Trans, submission, State.S.completed, quest, State.Q.completed);
+            let encounter = await GameDatabases.deleteSubmissionIfEncounter(Trans, submission);
+            
+            if(!encounter) {
+                // Set site message
+                let formatter = global.formatter;
+                let messageData = {
+                    rating: rating,
+                    times_played:  quest.times_played,
+                    date: formatter.today(),
+                    time: formatter.toHhmmss(submission.seconds_played),
+                    total_time: formatter.toHhmmss(quest.seconds_played)
+                };
 
-            quest.state = State.Q.completed;
-            quest.times_played++;
-            quest.seconds_played += submission.seconds_played;
-            await GameDatabases.updateQuest(Trans, quest);
-
-            // Set site message
-            let formatter = global.formatter;
-            let messageData = {
-                rating: rating,
-                times_played:  quest.times_played,
-                date: formatter.today(),
-                time: formatter.toHhmmss(submission.seconds_played),
-                total_time: formatter.toHhmmss(quest.seconds_played)
-            };
-            siteMessage = global._site_message.COMPLETED;
-            await SiteMessageDB.setSiteMessage(Trans, submission.user_id, siteMessage, messageData);
+                let siteMessage = global._site_message.COMPLETED;
+                await SiteMessageDB.setSiteMessage(Trans, submission.user_id, siteMessage, messageData);
+            }
+            
+            let progress = await progressActives(Trans, GameDatabases);
 
             // Commit transaction and send OK
             await Trans.commitAsync();
-            res.status(200).send("OK. Submission completed");
+            res.status(200).send("OK. Submission completed."
+                + " Journey has progressed!" 
+                + " (Deleted: " + progress.deleted  
+                + " Updated: " + progress.updated);
         } catch (e) {
             // If error, rollback and send ERROR
             await Trans.rollbackAsync();
@@ -128,64 +114,55 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
             }
 
             // Fetch submission and quest
-            let submission = await GameDatabases.getSubmissionBySubmissionID(Trans, submission_id);
-            if(!submission) {
-                throw "No submission received when querying ID " + submission_id;
-            }
-            if(!submission.active_state) {
-                throw "Cannot complete a submission that is not active";
-            }
-            let quest = await GameDatabases.getQuestByID(Trans, submission.quest_id);
-            if(!quest) {
-                throw "No quest received when querying ID " + submission.quest_id;
-            }
+            let submission = await getAndVerifySubmission(Trans, submission_id);
+            let quest = await getAndVerifyQuest(Trans, submission);
 
             // Make relevant updates
-            submission.state = State.S.voted_out;
-            submission.start_date = submission.start_date || 'NOW()';
-            submission.end_date = 'NOW()';
-            await GameDatabases.updateSubmission(Trans, submission);
+            await updateSubmissionAndQuest(Trans, submission, State.S.voted_out, quest, State.Q.voted_out);
+            let encounter = await GameDatabases.deleteSubmissionIfEncounter(Trans, submission);
 
-            quest.state = State.Q.voted_out;
-            quest.times_played++;
-            quest.seconds_played += submission.seconds_played;
-            await GameDatabases.updateQuest(Trans, quest);
+            if(!encounter) {
+                // If a submission should be resubmitted, we delete the old
+                // submission and create a new one, pointing to the same quest.
+                // If a submission should not be resubmitted, we do not delete it
+                // since the user will delete it themselves when they click "Confirm"
+                if(resubmit){
+                    await GameDatabases.deleteSubmission(Trans, submission);
+                    await GameDatabases.createSubmission(Trans,
+                        submission.quest_id,
+                        submission.user_id,
+                        submission.comments);
 
-            // If a submission should be resubmitted, we delete the old
-            // submission and create a new one, pointing to the same quest.
-            // If a submission should not be resubmitted, we do not delete it
-            // since the user will delete it themselves when they click "Confirm"
-            if(resubmit){
-                await GameDatabases.deleteSubmission(Trans, submission);
-                await GameDatabases.createSubmission(Trans,
-                    submission.quest_id,
-                    submission.user_id,
-                    submission.comments);
+                        quest.state = State.Q.submitted;
+                        await GameDatabases.updateQuest(Trans, quest);
+                }
 
-                    quest.state = State.Q.submitted;
-                    await GameDatabases.updateQuest(Trans, quest);
+                // Set site message
+                let formatter = global.formatter;
+                let messageData = {
+                    rating: rating,
+                    times_played:  quest.times_played,
+                    date: formatter.today(),
+                    yes_count: yes_count,
+                    no_count: no_count,
+                    time: formatter.toHhmmss(submission.seconds_played),
+                    total_time: formatter.toHhmmss(quest.seconds_played)
+                };
+
+                let siteMessage = resubmit ?
+                    global._site_message.VOTED_OUT_RESUBMITTED :
+                    global._site_message.VOTED_OUT;
+                await SiteMessageDB.setSiteMessage(Trans, submission.user_id, siteMessage, messageData);
             }
-
-            // Set site message
-            let formatter = global.formatter;
-            let messageData = {
-                rating: rating,
-                times_played:  quest.times_played,
-                date: formatter.today(),
-                yes_count: yes_count,
-                no_count: no_count,
-                time: formatter.toHhmmss(submission.seconds_played),
-                total_time: formatter.toHhmmss(quest.seconds_played)
-            };
-
-            let siteMessage = resubmit ?
-                global._site_message.VOTED_OUT_RESUBMITTED :
-                global._site_message.VOTED_OUT;
-            await SiteMessageDB.setSiteMessage(Trans, submission.user_id, siteMessage, messageData);
+            
+            let progress = await progressActives(Trans, GameDatabases);
 
             // Commit transaction and send OK
             await Trans.commitAsync();
-            res.status(200).send("OK. Submission voted out");
+            res.status(200).send("OK. Submission voted out."
+                + " Journey has progressed!" 
+                + " (Deleted: " + progress.deleted  
+                + " Updated: " + progress.updated);
         } catch (e) {
             // If error, rollback and send ERROR
             await Trans.rollbackAsync();
@@ -203,48 +180,105 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
             if(!comment) {
                 throw "Missing 'comment'";
             }
+            
+            let submission_id = json.submission_id;
+            if (!submission_id)
+                throw "Body missing 'submission_id'";
 
-            // Update the submission stats
-            let submission = await GameDatabases.getCurrentActive(Trans);
-            if(!submission){
-                throw "No submission received when querying for current active";
+             // Fetch submission and quest
+            let submission = await getAndVerifySubmission(Trans, submission_id);
+            let quest = await getAndVerifyQuest(Trans, submission);
+
+            // Make relevant updates
+            await updateSubmissionAndQuest(Trans, submission, State.S.suspended, quest, State.Q.suspended);
+            let encounter = await GameDatabases.deleteSubmissionIfEncounter(Trans, submission);
+            
+            if(!encounter) {
+                // We remove the original submission, and create a new one.
+                // This will allos us to keep a propper record, so that the
+                // original suspended submission record is retained, but we
+                // have a new submission which the user may opt to remove
+                //
+                // If we were to suspende an encounter, we simply don't resubmit
+                await GameDatabases.deleteSubmission(Trans, submission);
+                await GameDatabases.createSubmission(Trans,
+                    submission.quest_id,
+                    submission.user_id,
+                    submission.comments,
+                    State.S.suspended);
+
+                quest.state = State.Q.suspended;
+                await GameDatabases.updateQuest(Trans, quest);
+
+                // Set the site message
+                let formatter = global.formatter;
+                let messageData = {
+                    date: formatter.today(),
+                    comment: comment
+                };
+                siteMessage = global._site_message.SUSPENDED;
+                await SiteMessageDB.setSiteMessage(Trans, submission.user_id, siteMessage, messageData);
             }
-            submission.state = State.S.suspended;
-            await GameDatabases.updateSubmission(Trans, submission);
 
-            // Update the quest
-            let quest = await GameDatabases.getQuestByID(Trans, submission.quest_id);
-            quest.state = State.Q.suspended;
-            await GameDatabases.updateQuest(Trans, quest);
-
-            // Suspend the current submission and progress the submission queue
-            await GameDatabases.suspend(Trans, submission);
-            await GameDatabases.advanceActives(Trans);
-
-            // Set the site message
-            let formatter = global.formatter;
-            let messageData = {
-                date: formatter.today(),
-                comment: comment
-            };
-            siteMessage = global._site_message.SUSPENDED;
-            await SiteMessageDB.setSiteMessage(Trans, submission.user_id, siteMessage, messageData);
+            let progress = await progressActives(Trans, GameDatabases);
 
             // Commit transaction and send OK
             await Trans.commitAsync();
-            res.status(200).send("OK. Journey has progressed (current was suspended)");
+            res.status(200).send("OK. Submission suspended."
+                + " Journey has progressed!" 
+                + " (Deleted: " + progress.deleted  
+                + " Updated: " + progress.updated);
         } catch (e) {
             // If error, rollback and send ERROR
             await Trans.rollbackAsync();
             errorLogAndSend(res, e);
         }
     });
+    
+    //*******************************************************
+    //      Ender - Helpers
+    //*******************************************************
+    
+    async function getAndVerifySubmission(Trans, submissionID) {
+        let submission = await GameDatabases.getSubmissionBySubmissionID(Trans, submissionID);
+        if (!submission)
+            throw "Submission " + submissionID + " does not exist";
+        if(!submission.active_state) {
+            throw "Cannot modify a submission that is not active";
+        }
+        return submission;
+    }
+    
+    async function getAndVerifyQuest(Trans, submission) {
+        let quest = await GameDatabases.getQuestByID(Trans, submission.quest_id);
+        if(!quest) {
+            throw "No quest received when querying ID " + submission.quest_id;
+        }
+        return quest;
+    }
+    
+    async function updateSubmissionAndQuest(Trans, submission, submissionState, quest, questState) {
+        // Make relevant updates
+        submission.state = submissionState;
+        submission.start_date = submission.start_date || 'NOW()';
+        submission.end_date = 'NOW()';
+        await GameDatabases.updateSubmission(Trans, submission);
+
+        quest.state = questState;
+        quest.times_played++;
+        quest.seconds_played += submission.seconds_played;
+        await GameDatabases.updateQuest(Trans, quest);
+    }
+    
+    //=======================================================
+    //==    Setter endpoints
+    //=======================================================
 
     router.post('/setnext', isAuthenticated, async (req, res) => {
         let Trans = await MySQL.transaction();
         try {
             let json = req.body;
-            let nextSubmissionID = json.next;
+            let nextSubmissionID = json.submission_id;
             if (!nextSubmissionID)
                 throw "Body missing 'next'";
 
@@ -253,16 +287,19 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
             if (!submission)
                 throw "Submission " + nextSubmissionID + " does not exist";
 
-            // Check that the submission is not already active
-            if(submission.state === State.S.active)
-                throw "Submission " + nextSubmissionID + " is already active";
+            // Check that the submission is in the correct state
+            if(submission.state !== State.S.submitted)
+                throw "Submission " + nextSubmissionID + " is in state " + submission.state 
+                    + ". Has to be in state " + State.S.submitted;
 
             let currentNext = await GameDatabases.getNextActive(Trans);
             if(currentNext)
                 throw "Submission " + currentNext.submission_id + " is already assigned as 'next'";
 
             // Queue the submission as NEXT
-            let affected = await GameDatabases.setNextActive(Trans, submission);
+            let index = await GameDatabasesQuery.getHighestIndex(Trans);
+            index++;
+            let affected = await GameDatabases.setNextActive(Trans, submission, index);
             if (affected === 0)
                 throw "Error inserting submission as 'next'";
 
@@ -277,9 +314,15 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
             };
             await GameDatabases.updateQuest(Trans, quest);
 
+            // Progress actives (i.e. set the one just assigned as next as current)
+            let progress = await progressActives(Trans, GameDatabases);
+
             // Commit transaction and send OK
             await Trans.commitAsync();
-            res.status(200).send("OK. Next game set");
+            res.status(200).send("OK. Next game set."
+                + " Journey has progressed!" 
+                + " (Deleted: " + progress.deleted  
+                + " Updated: " + progress.updated);
 
         } catch (e) {
             // If error, rollback and send ERROR
@@ -287,6 +330,67 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
             errorLogAndSend(res, e);
         }
     });
+    
+    router.post('/setnext/suspended', isAuthenticated, async (req, res) => {
+        let Trans = await MySQL.transaction();
+        try {
+            let json = req.body;
+            let submissionID = json.submission_id;
+            if (!submissionID)
+                throw "Body missing 'next'";
+
+            // Check that the submission exists as it should
+            let submission = await GameDatabases.getSubmissionBySubmissionID(Trans, submissionID);
+            if (!submission)
+                throw "Submission " + submissionID + " does not exist";
+
+            // Check that the submission is not already active
+            if(submission.state !== State.S.suspended)
+                throw "Submission " + submissionID + " is not suspended";
+            
+            // Check that the submission has not been deleted by the user
+            if(submission.deleted)
+                throw "Submission " + submissionID + " has been deleted";
+
+            // Set the submission as a subindex
+            let index = await GameDatabasesQuery.getNextSubIndex(Trans);
+            let affected = await GameDatabases.setSubindexActive(Trans, submission, index);
+            if (affected === 0)
+                throw "Error inserting submission as 'subindex'";
+
+            // Update the submission state
+            submission.state = State.S.active;
+            await GameDatabases.updateSubmission(Trans, submission);
+
+            // Update the quest state
+            let quest = {
+                quest_id: submission.quest_id,
+                state: State.Q.active
+            };
+            await GameDatabases.updateQuest(Trans, quest);
+
+            // Commit transaction and send OK
+            await Trans.commitAsync();
+            res.status(200).send("OK. Next subindex game set");
+
+        } catch (e) {
+            // If error, rollback and send ERROR
+            await Trans.rollbackAsync();
+            errorLogAndSend(res, e);
+        }
+    });
+    
+    router.post('/setencounter/fresh', isAuthenticated, async (req, res) => {
+        
+    });
+    
+    router.post('/setencounter/abandoned', isAuthenticated, async (req, res) => {
+        
+    });
+    
+    //=======================================================
+    //==    Misc endpoints
+    //=======================================================
 
     router.post('/allowsubmissions', isAuthenticated, async (req, res) => {
         try {
@@ -305,22 +409,29 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
             let json = req.body;
             let submission = json.submission;
             let quest = json.quest;
+            let vote_timer = json.vote_timer;
 
             // Counters for keeping track of how many updates occured
             let subCount = 0;
             let questCount = 0;
+            let voteTimerCount = null;
 
             // Perform submission and quest updates
             // This will only affect the fields labeled as "allowed for updated"
-            if(submission)
+            if(submission) {
                 subCount = await GameDatabases.updateSubmission(Trans, submission);
-            if(quest)
+                if(vote_timer)
+                    voteTimerCount = await GameDatabases.updateVoteTimer(Trans, submission, vote_timer);
+            }
+            if(quest) {
                 questCount = await GameDatabases.updateQuest(Trans, quest, true);
+            }
 
             // Commit transaction and send OK
             await Trans.commitAsync();
             res.status(200).send("OK. Submission updated: " + !!subCount
-                               + " Quest updated: " + !!questCount);
+                               + " Quest updated: " + !!questCount
+                               + " Vote Timer updated: " + !!voteTimerCount);
         } catch (e) {
             // If error, rollback and send ERROR
             await Trans.rollbackAsync();
@@ -330,7 +441,7 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
 
     router.get('/ping', isAuthenticated, async (req, res) => {
        try {
-            res.status(200).send("OK");
+            res.status(200).send("OK - Journey");
        } catch (e) {
             errorLogAndSend(res, e);
        }
@@ -353,4 +464,24 @@ module.exports = function (MySQL, GameDatabases, SiteMessageDB) {
         console.log( error instanceof Error ? error.stack : error);
         res.status(500).send(error instanceof Error ? error.message : error);
     }
+};
+
+
+async function progressActives(Trans, GameDatabases) {
+    // Delete all ended submissions that are still in the ACTIVE table
+    let deleteCount = await GameDatabases.deleteEndedActives(Trans);
+
+    // If there is no current game, and there is a next game,
+    // move the next game to the current slot
+    let updateCount = 0;
+    let current = await GameDatabases.getCurrentActive(Trans);
+    let next = current ? null : await GameDatabases.getNextActive(Trans);
+    if(!current && next) {
+        updateCount = await GameDatabases.advanceActives(Trans);
+    }
+    
+    return {
+        deleted: deleteCount,
+        updated: updateCount
+    };
 };

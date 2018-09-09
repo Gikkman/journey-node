@@ -3,13 +3,13 @@ module.exports = function(Config){
 	var obj = {};
 
 	var pool  = mysql.createPool({
-		connectionLimit : 10,
-		host     : Config.mysql_host,
-		port	 : Config.mysql_port,
-		user     : Config.mysql_user,
-		password : Config.mysql_password,
-		database : Config.mysql_schema,
-        timezone: 'utc'
+            connectionLimit : 10,
+            host    : Config.mysql_host,
+            port    : Config.mysql_port,
+            user    : Config.mysql_user,
+            password : Config.mysql_password,
+            database : Config.mysql_schema,
+            timezone: 'utc'
 	});
 
 	obj.query = function(query, args, callback){
@@ -78,7 +78,7 @@ module.exports = function(Config){
 
     obj.logError = function(error) {
         console.error("SQL error: " + error.code + "\n" + error.sqlMessage + "\n[" + error.sql + "]");
-    }
+    };
 
 	return obj;
 };

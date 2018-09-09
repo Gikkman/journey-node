@@ -47,6 +47,8 @@ global.formatter = require("./modules/formatter.js")();
 
 global._state = require("./modules/state.js")();
 global._site_message = require("./modules/site_message.js")();
+
+global.ADMIN_ID = 1;
 //=======================================================
 //==    Config
 //=======================================================
