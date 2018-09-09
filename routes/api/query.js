@@ -90,7 +90,7 @@ module.exports = function (MySQL, GameDatabases, GameDatabasesCrossQuery) {
     
     router.get('/highestindex', isAuthenticated, async (req, res) => {
         try {
-            let index = await GameDatabases.getHighestIndex(MySQL);
+            let index = await GameDatabasesCrossQuery.getHighestIndex(MySQL);
             
             res.status(200).json( {
                 index: index
@@ -105,6 +105,18 @@ module.exports = function (MySQL, GameDatabases, GameDatabasesCrossQuery) {
             let stats = await GameDatabasesCrossQuery.getSubmissionsStatistics(MySQL);
             res.status(200).json( {
                 stats
+            });           
+        } catch (e) {
+            errorLogAndSend(res, e);
+        }
+    });
+    
+    router.get('/suspendedsubmissions', isAuthenticated, async (req, res) => {
+        try {
+            let suspended = await GameDatabasesCrossQuery.getSuspended(MySQL);
+            cleanSubmission(suspended);
+            res.status(200).json( {
+                suspended: suspended
             });           
         } catch (e) {
             errorLogAndSend(res, e);
