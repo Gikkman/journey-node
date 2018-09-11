@@ -51,9 +51,9 @@ module.exports = function (MySQL, GameDatabases, GameDatabasesCrossQuery) {
     
     router.get('/raffleblocked', isAuthenticated, async (req, res) => {
         /**
-         * Users are blocked from a raffle for 2 wins after they have won. So
+         * Users are blocked from a raffle for 5 wins after they have won. So
          * say a user wins raffle #100, then they cannot win raffle #101 nor
-         * #102, but they can win again #103.
+         * #102, #103, #104 and #105, but they can win again #106.
          * 
          * To find the blocked users, we need to consider both the currently 
          * active games and reviews, since the index might be in past time or 
@@ -67,14 +67,17 @@ module.exports = function (MySQL, GameDatabases, GameDatabasesCrossQuery) {
             let index = req.query.index;
             
             let current = await GameDatabases.getCurrentActive(MySQL);
-            let previous = await GameDatabases.getNextActive(MySQL);
+            let next = await GameDatabases.getNextActive(MySQL);
             let review1 = await GameDatabases.getReview(MySQL, index - 1);
             let review2 = await GameDatabases.getReview(MySQL, index - 2);
+            let review3 = await GameDatabases.getReview(MySQL, index - 3);
+            let review4 = await GameDatabases.getReview(MySQL, index - 4);
+            let review5 = await GameDatabases.getReview(MySQL, index - 5);
             
-            cleanSubmission(current, previous, review1, review2);
-            let arr = [current, previous, review1, review2]
+            cleanSubmission(next, current, review1, review2, review3, review4, review5);
+            let arr = [next, current, review1, review2, review3, review4, review5]
                     .filter(n => n !== undefined)
-                    .filter(n => n.index >= index - 2 && n.index < index)
+                    .filter(n => n.index >= index - 5 && n.index < index)
                     .map(n => ({
                         won: n.index,
                         user_id: n.user_id
