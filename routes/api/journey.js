@@ -380,8 +380,49 @@ module.exports = function (MySQL, GameDatabases, GameDatabasesQuery, SiteMessage
         }
     });
     
-    router.post('/setencounter/fresh', isAuthenticated, async (req, res) => {
-        
+    router.post('/setnext/encounter', isAuthenticated, async (req, res) => {
+        let Trans = await MySQL.transaction();
+        try {
+            let payload = req.body;
+            let displayName = payload.display_name;
+            
+           if(!payload.comments) payload.comments = "";
+            if( !payload.title || !payload.system || !payload.goal || !payload.display_name ) 
+                throw "Error. Missing fields. Required title, system, goal and display_name";
+           
+           
+            let questID = await GameDatabases.createQuest(Trans, payload.title, payload.system, payload.goal);
+            let submissionID = await GameDatabases.createSubmission(Trans, questID, global.ADMIN_ID, payload.comments);
+            await GameDatabases.setDisplayNameOverride(Trans, submissionID, displayName);
+            
+            let submission = await GameDatabases.getSubmissionBySubmissionID(Trans, submissionID);
+            if(!submission)
+                throw "Submission was not created correctly";
+            
+            let index = await GameDatabasesQuery.getNextSubIndex(Trans); 
+            let affected = await GameDatabases.setEncounterActive(Trans, submission, index);
+            if (affected === 0)
+                throw "Error inserting submission as 'encounter'";
+            
+             // Update the submission state
+            submission.state = State.S.active;
+            await GameDatabases.updateSubmission(Trans, submission);
+
+            // Update the quest state
+            let quest = {
+                quest_id: submission.quest_id,
+                state: State.Q.active
+            };
+            await GameDatabases.updateQuest(Trans, quest);
+            
+            // Commit transaction and send OK
+            await Trans.commitAsync();
+            res.status(200).send("OK. Next subindex game set");
+        } catch (e) {
+            // If error, rollback and send ERROR
+            await Trans.rollbackAsync();
+            errorLogAndSend(res, e);
+        }
     });
     
     router.post('/setencounter/abandoned', isAuthenticated, async (req, res) => {
