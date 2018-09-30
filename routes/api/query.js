@@ -10,13 +10,15 @@ module.exports = function (MySQL, GameDatabases, GameDatabasesCrossQuery) {
             let current = await GameDatabases.getCurrentActive(MySQL);
             let next = await GameDatabases.getNextActive(MySQL);
             let subindices = await GameDatabases.getSubindexActive(MySQL);
+            let encounters = await GameDatabases.getEncounterActive(MySQL);
             
-            cleanSubmission(current, next, subindices);
+            cleanSubmission(current, next, subindices, encounters);
             
             res.status(200).json( {
                 current: current,
                 next: next,
-                subindices: subindices
+                subindices: subindices,
+                encounters: encounters
             });
         } catch (e) {
             errorLogAndSend(res, e);

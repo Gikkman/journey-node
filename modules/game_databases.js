@@ -75,6 +75,12 @@ module.exports = function () {
         let data = await DB.queryAsync(sql, [questID, userID, comments, state]);
         return data.insertId;
     };
+    
+    obj.setDisplayNameOverride = async (DB, submissionID, displayName) => {
+        var sql = "UPDATE " + SUBMISSONS + " SET `dn_override` = ?"
+                + " WHERE uid = ?";
+        return DB.queryAsync(sql, [displayName, submissionID]);
+    };
 
     obj.deleteSubmission = async (DB, submission) => {
         var sql = "UPDATE " + SUBMISSONS + " SET `deleted` = NOW() WHERE `uid` = ?";
@@ -182,8 +188,10 @@ module.exports = function () {
     
     obj.deleteSubmissionIfEncounter = async (DB, submission) => {
         if(submission.active_state === State.A.encounter) {
-            let sql = "DELTE FROM " + ACTIVE + " WHERE `submission_id` = ?";
+            let sql = "DELETE FROM " + ACTIVE + " WHERE `submission_id` = ?";
             await DB.queryAsync(sql, [submission.submission_id]);            
+            
+            await obj.deleteSubmission(DB, submission);
             return true;
         }
         return false;
@@ -207,10 +215,12 @@ module.exports = function () {
         return row.affectedRows;
     };
     
-    obj.setEncounterActive = async (DB, submission, index) => {    
-        var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`, `index`, `subindex`) "
-            + " VALUES (?," + JOURNEY + ",?, ?, ?)";
-        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.encounter, index.index, index.subIndex]);
+    obj.setEncounterActive = async (DB, submission, index, vote = false) => {   
+        const VOTE_TIMER = vote ? global._config.vote_time_init : null;
+        
+        var sql = "INSERT INTO " + ACTIVE + " (`submission_id`, `system`, `state`, `index`, `subindex`, `vote_timer`) "
+            + " VALUES (?," + JOURNEY + ",?, ?, ?, ?)";
+        let row = await DB.queryAsync(sql, [submission.submission_id, State.A.encounter, index.index, index.subIndex, VOTE_TIMER]);
         return row.affectedRows;
     };
 
@@ -232,6 +242,12 @@ module.exports = function () {
         let sql = FULL_GAME_SQL
                 + " WHERE `a`.`system` = " + JOURNEY + " AND `a`.`state` = ? AND `s`.`state` = ?";
         return DB.queryAsync(sql, [State.A.subindex, State.S.active]);
+    };
+    
+    obj.getEncounterActive = async (DB) => {
+        let sql = FULL_GAME_SQL
+                + " WHERE `a`.`system` = " + JOURNEY + " AND `a`.`state` = ? AND `s`.`state` = ?";
+        return DB.queryAsync(sql, [State.A.encounter, State.S.active]);
     };
     
     obj.updateVoteTimer = async (DB, submission, vote_timer) => {
