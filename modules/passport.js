@@ -1,4 +1,4 @@
-var TwitchStrategy = require("passport-twitch").Strategy;
+var TwitchStrategy = require("passport-twitch-new").Strategy;
 var SiteMessageDatabase = require(global.modules + "/site_message_database")();
 
 var SELECT_USER_QUERY =
@@ -35,8 +35,8 @@ module.exports = function(Passport, MySQL, Config) {
 
         /* The profile object has the following fields:
          *  profile.id,
-         *  profile.username,
-         *  profile.displayName,
+         *  profile.login,
+         *  profile.display_name,
          *  profile.email
          */
         function(accessToken, refreshToken, profile, done) {
@@ -61,10 +61,10 @@ function findOrCreateTwitch(profile, done, MySQL){
             + ' access_token=?, refresh_token=?';
     MySQL.query(
         insertUpdateQuery,
-        [profile.id, profile.username, profile.displayName, verified,
+        [profile.id, profile.login, profile.display_name, verified,
             profile.accessToken, profile.refreshToken,
 
-            verified, profile.username, profile.displayName,
+            verified, profile.login, profile.display_name,
             profile.accessToken, profile.refreshToken],
         (err, result) => {
             if(err)

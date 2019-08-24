@@ -107,7 +107,7 @@ var _router = require('./routes/_router.js')(app, passport, _mysql);
 //==    View enigine
 //=======================================================
 app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
+app.set('view engine', 'pug');
 
 //=======================================================
 //==    404 handling
